@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["shopgym"]
+}
+
+model Episode {
+  id                 String   @id @db.Uuid
+  task_slug          String
+  seed               Int
+  env_version        Int
+  store_date         DateTime @db.Date
+  status             String   @default("active")
+  owner              String
+  created_at         DateTime @db.Timestamptz(3)
+  expires_at         DateTime @db.Timestamptz(3)
+  initial_state_hash String
+  initial_state      Json
+  expected           Json
+  score              Json?
+  summary            String?
+
+  customers       Customer[]
+  products        Product[]
+  staff           Staff[]
+  orders          Order[]
+  order_items     OrderItem[]
+  payments        Payment[]
+  refunds         Refund[]
+  replacements    Replacement[]
+  purchase_orders PurchaseOrder[]
+  approvals       Approval[]
+  threads         Thread[]
+  messages        Message[]
+  calendar_events CalendarEvent[]
+  budget          Budget[]
+  policy          Policy[]
+  action_log      ActionLog[]
+
+  @@index([expires_at])
+  @@map("episodes")
+  @@schema("shopgym")
+}
+
+model Customer {
+  episode_id String   @db.Uuid
+  id         Int
+  name       String
+  email      String
+  tier       String
+  created_on DateTime @db.Date
+
+  episode Episode  @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  orders  Order[]
+  threads Thread[]
+
+  @@id([episode_id, id])
+  @@unique([episode_id, email])
+  @@map("customers")
+  @@schema("shopgym")
+}
+
+model Product {
+  episode_id        String @db.Uuid
+  id                Int
+  sku               String
+  name              String
+  unit_price_cents  Int
+  unit_cost_cents   Int
+  stock             Int
+  reorder_threshold Int
+  reorder_qty       Int
+  supplier          String
+
+  episode         Episode         @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order_items     OrderItem[]
+  replacements    Replacement[]
+  purchase_orders PurchaseOrder[]
+
+  @@id([episode_id, id])
+  @@unique([episode_id, sku])
+  @@map("products")
+  @@schema("shopgym")
+}
+
+model Staff {
+  episode_id String  @db.Uuid
+  id         Int
+  name       String
+  role       String
+  on_duty    Boolean
+
+  episode Episode         @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  events  CalendarEvent[]
+
+  @@id([episode_id, id])
+  @@map("staff")
+  @@schema("shopgym")
+}
+
+model Order {
+  episode_id       String    @db.Uuid
+  id               Int
+  customer_id      Int
+  status           String
+  placed_on        DateTime  @db.Date
+  shipped_on       DateTime? @db.Date
+  delivered_on     DateTime? @db.Date
+  shipping_address String
+  total_cents      Int
+
+  episode      Episode       @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  customer     Customer      @relation(fields: [episode_id, customer_id], references: [episode_id, id], onDelete: Cascade)
+  items        OrderItem[]
+  payments     Payment[]
+  refunds      Refund[]
+  replacements Replacement[]
+  approvals    Approval[]
+
+  @@id([episode_id, id])
+  @@map("orders")
+  @@schema("shopgym")
+}
+
+model OrderItem {
+  episode_id       String @db.Uuid
+  id               Int
+  order_id         Int
+  product_id       Int
+  qty              Int
+  unit_price_cents Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [episode_id, order_id], references: [episode_id, id], onDelete: Cascade)
+  product Product @relation(fields: [episode_id, product_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("order_items")
+  @@schema("shopgym")
+}
+
+model Payment {
+  episode_id   String   @db.Uuid
+  id           Int
+  order_id     Int
+  amount_cents Int
+  captured_on  DateTime @db.Date
+  status       String
+
+  episode Episode  @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order   Order    @relation(fields: [episode_id, order_id], references: [episode_id, id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@id([episode_id, id])
+  @@map("payments")
+  @@schema("shopgym")
+}
+
+model Refund {
+  episode_id   String @db.Uuid
+  id           Int
+  order_id     Int
+  payment_id   Int
+  amount_cents Int
+  reason       String
+  created_step Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [episode_id, order_id], references: [episode_id, id], onDelete: Cascade)
+  payment Payment @relation(fields: [episode_id, payment_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("refunds")
+  @@schema("shopgym")
+}
+
+model Replacement {
+  episode_id   String @db.Uuid
+  id           Int
+  order_id     Int
+  product_id   Int
+  qty          Int
+  created_step Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [episode_id, order_id], references: [episode_id, id], onDelete: Cascade)
+  product Product @relation(fields: [episode_id, product_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("replacements")
+  @@schema("shopgym")
+}
+
+model PurchaseOrder {
+  episode_id      String @db.Uuid
+  id              Int
+  product_id      Int
+  qty             Int
+  unit_cost_cents Int
+  total_cents     Int
+  created_step    Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [episode_id, product_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("purchase_orders")
+  @@schema("shopgym")
+}
+
+model Approval {
+  episode_id   String @db.Uuid
+  id           Int
+  order_id     Int
+  amount_cents Int
+  reason       String
+  status       String
+  created_step Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [episode_id, order_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("approvals")
+  @@schema("shopgym")
+}
+
+model Thread {
+  episode_id  String @db.Uuid
+  id          Int
+  customer_id Int
+  subject     String
+  status      String
+
+  episode  Episode   @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [episode_id, customer_id], references: [episode_id, id], onDelete: Cascade)
+  messages Message[]
+
+  @@id([episode_id, id])
+  @@map("threads")
+  @@schema("shopgym")
+}
+
+model Message {
+  episode_id String @db.Uuid
+  id         Int
+  thread_id  Int
+  author     String
+  body       String
+  sent_step  Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  thread  Thread  @relation(fields: [episode_id, thread_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("messages")
+  @@schema("shopgym")
+}
+
+model CalendarEvent {
+  episode_id   String   @db.Uuid
+  id           Int
+  staff_id     Int
+  title        String
+  starts_at    DateTime @db.Timestamp(0)
+  ends_at      DateTime @db.Timestamp(0)
+  customer_id  Int?
+  created_step Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+  staff   Staff   @relation(fields: [episode_id, staff_id], references: [episode_id, id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("calendar_events")
+  @@schema("shopgym")
+}
+
+model Budget {
+  episode_id           String @db.Uuid
+  id                   Int
+  month                String
+  restock_budget_cents Int
+  spent_cents          Int
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("budget")
+  @@schema("shopgym")
+}
+
+model Policy {
+  episode_id String @db.Uuid
+  id         Int
+  text       String
+  rules      Json
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("policy")
+  @@schema("shopgym")
+}
+
+model ActionLog {
+  episode_id    String  @db.Uuid
+  id            Int
+  tool          String
+  args          Json
+  ok            Boolean
+  error         String?
+  result_digest String?
+
+  episode Episode @relation(fields: [episode_id], references: [id], onDelete: Cascade)
+
+  @@id([episode_id, id])
+  @@map("action_log")
+  @@schema("shopgym")
+}
