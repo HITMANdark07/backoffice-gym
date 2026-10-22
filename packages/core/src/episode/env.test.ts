@@ -126,3 +126,45 @@ describe('ids, expiry and infrastructure errors', () => {
     await broken.$disconnect();
   });
 });
+
+describe('review fixes', () => {
+  it('rejects oversized ids and amounts and NUL characters as agent errors, and logs them', async () => {
+    const r = await env.reset({ task: 'test-reply', seed: 7 });
+    const results = await play(env, r.episode_id, [
+      ['get_order', { order_id: 1e12 }],
+      ['request_manager_approval', { order_id: 1001, amount: 1e8, reason: 'x' }],
+      ['request_manager_approval', { order_id: 1001, amount: 1e300, reason: 'x' }],
+      ['reply_to_thread', { thread_id: 1, body: 'hi\u0000there' }],
+      ['search_orders', { customer_email: 'a\u0000b@example.com' }],
+    ]);
+    expect(results.map((x) => x.ok)).toEqual([false, false, false, false, false]);
+    expect(results.every((x) => /invalid arguments/.test(x.error ?? ''))).toBe(true);
+    expect(await db.actionLog.count({ where: { episode_id: r.episode_id } })).toBe(5);
+  });
+
+  it('closes the episode atomically on submit: no step is logged after it', async () => {
+    const r = await env.reset({ task: 'test-reply', seed: 8 });
+    const all = await Promise.all([
+      env.step(r.episode_id, { tool: 'submit', args: {} }),
+      ...Array.from({ length: 5 }, () => env.step(r.episode_id, { tool: 'read_policy' })),
+    ]);
+    const submitStep = all[0]!.step;
+    expect(all.filter((x) => x.ok).every((x) => x.step <= submitStep)).toBe(true);
+    const last = await db.actionLog.findFirstOrThrow({ where: { episode_id: r.episode_id }, orderBy: { id: 'desc' } });
+    expect(last.tool).toBe('submit');
+  });
+
+  it('never logs more than MAX_STEPS steps, even when failing steps race the last one', async () => {
+    const r = await env.reset({ task: 'test-reply', seed: 9 });
+    await play(env, r.episode_id, Array.from({ length: MAX_STEPS - 1 }, (): [string, unknown] => ['read_policy', {}]));
+    const racing = await Promise.all([
+      env.step(r.episode_id, { tool: 'fly' }),
+      env.step(r.episode_id, { tool: 'submit', args: {} }),
+      env.step(r.episode_id, { tool: 'fly' }),
+      env.step(r.episode_id, { tool: 'fly' }),
+    ]);
+    expect(await db.actionLog.count({ where: { episode_id: r.episode_id } })).toBe(MAX_STEPS);
+    expect(racing.every((x) => x.done)).toBe(true);
+    expect((await db.episode.findUniqueOrThrow({ where: { id: r.episode_id } })).status).toBe('scored');
+  });
+});

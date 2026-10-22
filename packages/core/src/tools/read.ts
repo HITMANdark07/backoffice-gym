@@ -4,8 +4,9 @@ import { ORDER_STATUSES } from '../store/types';
 import { dollars } from '../util/money';
 import { daysBetween, formatWallTime, isoDate, parseWallTime } from '../util/time';
 import { defineTool } from './types';
+import { id as idSchema, text } from './schemas';
 
-const id = z.number().int().positive();
+const id = idSchema();
 const day = (d: Date | null): string | null => (d ? isoDate(d) : null);
 const preview = (text: string | undefined): string => (!text ? '' : text.length > 120 ? `${text.slice(0, 120)}…` : text);
 
@@ -64,7 +65,7 @@ export const searchOrders = defineTool({
   kind: 'read',
   description: 'Find orders by order id, customer id, customer email or status. Returns at most 20.',
   input: z
-    .object({ order_id: id.optional(), customer_id: id.optional(), customer_email: z.string().trim().min(3).optional(), status: z.enum(ORDER_STATUSES).optional() })
+    .object({ order_id: id.optional(), customer_id: id.optional(), customer_email: text().trim().min(3).optional(), status: z.enum(ORDER_STATUSES).optional() })
     .strict(),
   async run({ tx, episodeId }, a) {
     const orders = await tx.order.findMany({
@@ -120,7 +121,7 @@ export const getCustomer = defineTool({
   kind: 'read',
   description: 'Look up a customer by id or email.',
   input: z
-    .object({ customer_id: id.optional(), email: z.string().trim().min(3).optional() })
+    .object({ customer_id: id.optional(), email: text().trim().min(3).optional() })
     .strict()
     .refine((a) => a.customer_id !== undefined || a.email !== undefined, { message: 'give customer_id or email' }),
   async run({ tx, episodeId }, a) {
@@ -141,7 +142,7 @@ export const checkInventory = defineTool({
   name: 'check_inventory',
   kind: 'read',
   description: "Stock levels, reorder settings and this month's restock budget. Filter by sku or to products below their reorder threshold.",
-  input: z.object({ sku: z.string().trim().min(1).optional(), below_threshold: z.boolean().optional() }).strict(),
+  input: z.object({ sku: text().trim().min(1).optional(), below_threshold: z.boolean().optional() }).strict(),
   async run({ tx, episodeId, storeDate }, a) {
     const products = await tx.product.findMany({ where: { episode_id: episodeId, ...(a.sku ? { sku: a.sku } : {}) }, orderBy: { id: 'asc' } });
     if (a.sku && products.length === 0) throw new ToolError(`no product with sku ${a.sku}`);
@@ -167,7 +168,7 @@ export const listCalendar = defineTool({
   name: 'list_calendar',
   kind: 'read',
   description: 'List staff and their calendar events between two IST times (YYYY-MM-DDTHH:mm), at most 14 days apart.',
-  input: z.object({ staff_id: id.optional(), from: z.string(), to: z.string() }).strict(),
+  input: z.object({ staff_id: id.optional(), from: text(), to: text() }).strict(),
   async run({ tx, episodeId }, a) {
     const from = parseWallTime(a.from);
     const to = parseWallTime(a.to);

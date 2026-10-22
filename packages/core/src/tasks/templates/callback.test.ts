@@ -2,6 +2,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { createEnv } from '../../episode/env';
 import { testDb } from '../../test/db';
 import { expectedOf, play } from '../../test/env';
+import { toolSchemas } from '../../tools/index';
 import { callback, type CallbackExpected } from './callback';
 
 const db = testDb();
@@ -57,5 +58,15 @@ describe('callback', () => {
   it('doing nothing scores 0', async () => {
     const { id } = await start();
     expect((await env.step(id, { tool: 'submit', args: {} })).score?.reward).toBe(0);
+  });
+});
+
+describe('callback: the agent is told to link the event', () => {
+  it('policy rule 7 and the schedule_event schema both say to link the customer', async () => {
+    const { id } = await start();
+    const policy = (await env.step(id, { tool: 'read_policy', args: {} })).result as { policy: string };
+    expect(policy.policy).toMatch(/7\. \*\*Callbacks\.\*\*[^\n]*link the event to the customer/i);
+    const schema = toolSchemas().find((t) => t.name === 'schedule_event')!.input_schema as { properties: { customer_id: { description?: string } } };
+    expect(schema.properties.customer_id.description).toMatch(/customer/i);
   });
 });

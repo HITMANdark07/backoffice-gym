@@ -26,12 +26,12 @@ export class EnvError extends Error {
 
 const PRISMA_CONSTRAINT_CODES = new Set(['P2002', 'P2003', 'P2004', 'P2011']);
 
-/** A message for the agent when `e` is a database integrity violation it caused; otherwise null. */
+/** A message for the agent when `e` is a data or integrity error its arguments caused (Postgres 22xxx/23xxx); otherwise null. */
 export function constraintMessage(e: unknown): string | null {
   if (typeof e !== 'object' || e === null) return null;
   const err = e as { code?: unknown; meta?: { driverAdapterError?: { cause?: { code?: unknown; message?: unknown } } } };
   const pg = err.meta?.driverAdapterError?.cause;
-  if (typeof pg?.code === 'string' && pg.code.startsWith('23')) {
+  if (typeof pg?.code === 'string' && (pg.code.startsWith('23') || pg.code.startsWith('22'))) {
     return `the database rejected the change: ${String(pg.message ?? pg.code)}`;
   }
   if (typeof err.code === 'string' && PRISMA_CONSTRAINT_CODES.has(err.code)) {

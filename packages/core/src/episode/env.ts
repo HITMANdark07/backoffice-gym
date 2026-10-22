@@ -79,10 +79,32 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
   async function lockEpisode(tx: Tx, id: string) {
     const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>('SELECT id FROM "shopgym"."episodes" WHERE id = $1::uuid FOR UPDATE', id);
     if (rows.length === 0) throw new EnvError('not_found', `episode ${id} not found`);
-    return tx.episode.findUniqueOrThrow({ where: { id }, select: { status: true, expires_at: true, store_date: true, score: true } });
+    return tx.episode.findUniqueOrThrow({ where: { id } });
   }
+  type LockedEpisode = Awaited<ReturnType<typeof lockEpisode>>;
 
   const stepCount = (tx: Tx, id: string) => tx.actionLog.count({ where: { episode_id: id } });
+
+  /** Scores and closes the episode. The caller's transaction must hold the episode lock. Idempotent. */
+  async function scoreLocked(tx: Tx, ep: LockedEpisode): Promise<ScoreResult> {
+    if (ep.score) return ep.score as unknown as ScoreResult;
+    const template = findTask(ep.task_slug);
+    const initial = ep.initial_state as unknown as Dump;
+    const final = await dumpEpisode(tx, ep.id);
+    const result = scoreTask(template, { expected: ep.expected, initial, final, diff: diffDumps(initial, final), storeDate: isoDate(ep.store_date) });
+    await tx.episode.update({ where: { id: ep.id }, data: { status: 'scored', score: toJson(result) } });
+    return result;
+  }
+
+  /** The result for a step that cannot run (finished, expired or at the cap), or null when the episode is open. */
+  async function closedResult(tx: Tx, ep: LockedEpisode): Promise<StepResult | null> {
+    const count = await stepCount(tx, ep.id);
+    const existing = (ep.score as unknown as ScoreResult | null) ?? null;
+    if (ep.status !== 'active') return { step: count, ok: false, error: 'the episode is finished', done: true, ...(existing ? { score: existing } : {}) };
+    if (ep.expires_at <= now()) return { step: count, ok: false, error: 'the episode has expired', done: true, ...(existing ? { score: existing } : {}) };
+    if (count >= MAX_STEPS) return { step: count, ok: false, error: 'step limit reached', done: true, score: await scoreLocked(tx, ep) };
+    return null;
+  }
 
   async function expireEpisodes(limit = 100): Promise<number> {
     return infra(() =>
@@ -123,32 +145,18 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
 
   async function score(episodeId: string): Promise<ScoreResult> {
     assertUuid(episodeId);
-    return infra(async () => {
-      const ep = await db.episode.findUnique({ where: { id: episodeId } });
-      if (!ep) throw new EnvError('not_found', `episode ${episodeId} not found`);
-      if (ep.score) return ep.score as unknown as ScoreResult;
-      const template = findTask(ep.task_slug);
-      const initial = ep.initial_state as unknown as Dump;
-      const final = await dumpEpisode(db, episodeId);
-      const result = scoreTask(template, { expected: ep.expected, initial, final, diff: diffDumps(initial, final), storeDate: isoDate(ep.store_date) });
-      await db.episode.update({ where: { id: episodeId }, data: { status: 'scored', score: toJson(result) } });
-      return result;
-    });
+    return infra(() => db.$transaction(async (tx) => scoreLocked(tx, await lockEpisode(tx, episodeId)), TX));
   }
 
   async function step(episodeId: string, req: StepRequest): Promise<StepResult> {
     assertUuid(episodeId);
-    let outcome: { kind: 'closed'; step: number; error: string; score: ScoreResult | null } | { kind: 'ok'; step: number; result: unknown; end: boolean };
     try {
-      outcome = await infra(() =>
-        db.$transaction(async (tx) => {
+      return await infra(() =>
+        db.$transaction(async (tx): Promise<StepResult> => {
           const ep = await lockEpisode(tx, episodeId);
-          const count = await stepCount(tx, episodeId);
-          const existing = (ep.score as unknown as ScoreResult | null) ?? null;
-          if (ep.status !== 'active') return { kind: 'closed' as const, step: count, error: 'the episode is finished', score: existing };
-          if (ep.expires_at <= now()) return { kind: 'closed' as const, step: count, error: 'the episode has expired', score: existing };
-          if (count >= MAX_STEPS) return { kind: 'closed' as const, step: count, error: 'step limit reached', score: existing };
-          const n = count + 1;
+          const closed = await closedResult(tx, ep);
+          if (closed) return closed;
+          const n = (await stepCount(tx, episodeId)) + 1;
           try {
             const tool = getTool(req.tool);
             if (!tool) throw new ToolError(`unknown tool "${req.tool}"`);
@@ -159,7 +167,9 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
             if (tool.kind === 'end') {
               await tx.episode.update({ where: { id: episodeId }, data: { summary: String((parsed.data as { summary?: unknown }).summary ?? '') } });
             }
-            return { kind: 'ok' as const, step: n, result, end: tool.kind === 'end' };
+            // Submit and the step cap close the episode in this same transaction, so no queued step can slip in.
+            const done = tool.kind === 'end' || n >= MAX_STEPS;
+            return { step: n, ok: true, result, done, ...(done ? { score: await scoreLocked(tx, ep) } : {}) };
           } catch (e) {
             const message = e instanceof ToolError ? e.message : constraintMessage(e);
             if (message === null) throw e;
@@ -169,23 +179,19 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
       );
     } catch (e) {
       if (!(e instanceof StepFailed)) throw e;
-      const n = await infra(() =>
-        db.$transaction(async (tx) => {
-          await lockEpisode(tx, episodeId);
+      // The failed step's writes were rolled back; log it in a fresh transaction, re-checking that the episode is still open.
+      return infra(() =>
+        db.$transaction(async (tx): Promise<StepResult> => {
+          const ep = await lockEpisode(tx, episodeId);
+          const closed = await closedResult(tx, ep);
+          if (closed) return closed;
           const n = (await stepCount(tx, episodeId)) + 1;
           await tx.actionLog.create({ data: { episode_id: episodeId, id: n, tool: req.tool, args: toJson(req.args ?? {}), ok: false, error: e.reason } });
-          return n;
+          const done = n >= MAX_STEPS;
+          return { step: n, ok: false, error: e.reason, done, ...(done ? { score: await scoreLocked(tx, ep) } : {}) };
         }, TX),
       );
-      const done = n >= MAX_STEPS;
-      return { step: n, ok: false, error: e.reason, done, ...(done ? { score: await score(episodeId) } : {}) };
     }
-
-    if (outcome.kind === 'closed') {
-      return { step: outcome.step, ok: false, error: outcome.error, done: true, ...(outcome.score ? { score: outcome.score } : {}) };
-    }
-    const done = outcome.end || outcome.step >= MAX_STEPS;
-    return { step: outcome.step, ok: true, result: outcome.result, done, ...(done ? { score: await score(episodeId) } : {}) };
   }
 
   async function getEpisode(episodeId: string): Promise<EpisodeInfo> {
