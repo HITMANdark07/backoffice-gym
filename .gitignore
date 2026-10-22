@@ -7,3 +7,7 @@ dist/
 .next/
 __pycache__/
 packages/db/src/generated/
+clients/python/.venv/
+clients/python/uv.lock
+__pycache__/
+.pytest_cache/
