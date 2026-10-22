@@ -1,8 +1,10 @@
+import { addressChange } from './templates/address-change';
 import { damagedItem } from './templates/damaged-item';
 import { refundWindowTrap } from './templates/refund-window-trap';
+import { restockBudget } from './templates/restock-budget';
 import type { AnyTask } from './types';
 
 /** Every task template, in display order. */
-export const TASKS: AnyTask[] = [damagedItem, refundWindowTrap];
+export const TASKS: AnyTask[] = [damagedItem, refundWindowTrap, restockBudget, addressChange];
 
 export const getTask = (slug: string): AnyTask | undefined => TASKS.find((t) => t.slug === slug);
