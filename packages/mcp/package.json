@@ -1,0 +1,22 @@
+{
+  "name": "@shopgym/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": { ".": "./src/server.ts" },
+  "bin": { "shopgym-mcp": "./bin/shopgym-mcp.mjs" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "write-suite": "tsx scripts/write-suite.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@shopgym/core": "workspace:*",
+    "@shopgym/db": "workspace:*",
+    "tsx": "4.23.15"
+  },
+  "devDependencies": {
+    "yaml": "2.8.1"
+  }
+}
