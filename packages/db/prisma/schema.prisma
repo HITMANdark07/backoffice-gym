@@ -321,3 +321,15 @@ model ActionLog {
   @@map("action_log")
   @@schema("shopgym")
 }
+
+model RateLimit {
+  key          String
+  bucket       String
+  window_start DateTime @db.Timestamptz(3)
+  count        Int
+
+  @@id([key, bucket, window_start])
+  @@index([window_start])
+  @@map("rate_limits")
+  @@schema("shopgym")
+}

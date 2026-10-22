@@ -4,13 +4,16 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "engines": { "node": ">=20.19" },
+  "engines": {
+    "node": ">=20.19"
+  },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "db:generate": "pnpm --filter @shopgym/db generate",
     "db:migrate:test": "pnpm --filter @shopgym/db migrate:test",
     "test": "pnpm db:generate && pnpm db:migrate:test && vitest run",
-    "typecheck": "pnpm db:generate && pnpm -r typecheck"
+    "typecheck": "pnpm db:generate && pnpm -r typecheck",
+    "api": "pnpm --filter @shopgym/api start"
   },
   "devDependencies": {
     "@shopgym/db": "workspace:*",
