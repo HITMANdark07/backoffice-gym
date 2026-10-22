@@ -13,7 +13,8 @@
     "db:migrate:test": "pnpm --filter @shopgym/db migrate:test",
     "test": "pnpm db:generate && pnpm db:migrate:test && vitest run",
     "typecheck": "pnpm db:generate && pnpm -r typecheck",
-    "api": "pnpm --filter @shopgym/api start"
+    "api": "pnpm --filter @shopgym/api start",
+    "replay": "pnpm --filter @shopgym/replay start"
   },
   "devDependencies": {
     "@shopgym/db": "workspace:*",

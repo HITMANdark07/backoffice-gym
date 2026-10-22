@@ -1,0 +1,17 @@
+{
+  "name": "@shopgym/replay",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "exports": { ".": "./src/replay.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@shopgym/core": "workspace:*",
+    "@shopgym/db": "workspace:*",
+    "tsx": "4.23.15"
+  }
+}
