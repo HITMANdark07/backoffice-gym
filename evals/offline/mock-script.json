@@ -1,0 +1,127 @@
+{
+  "entries": [
+    {
+      "match": "You are the operations assistant at Juniper Goods, an online home-goods store.\nToday is Fri 13 Mar 2026 (2026-03-13, IST).\nHandle the open support thread from Shakti Varma.\nRead the store policy before acting and follow it. Use the tools to look things up and make changes. Call submit when you are done.",
+      "steps": [
+        {
+          "toolCalls": [
+            {
+              "name": "read_policy",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "issue_refund",
+              "arguments": {
+                "order_id": 1013,
+                "amount": 54,
+                "reason": "damaged on arrival"
+              }
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "reply_to_thread",
+              "arguments": {
+                "thread_id": 3,
+                "body": "Sorry about that. We've taken care of order #1013."
+              }
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "submit",
+              "arguments": {
+                "summary": "done"
+              }
+            }
+          ]
+        },
+        {
+          "content": "Handled the thread and submitted."
+        }
+      ]
+    },
+    {
+      "match": "You are the operations assistant at Juniper Goods, an online home-goods store.\nToday is Mon 9 Mar 2026 (2026-03-09, IST).\nHandle the open support thread from Chandira Suthar.\nRead the store policy before acting and follow it. Use the tools to look things up and make changes. Call submit when you are done.",
+      "steps": [
+        {
+          "toolCalls": [
+            {
+              "name": "read_policy",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "reply_to_thread",
+              "arguments": {
+                "thread_id": 3,
+                "body": "Sorry, our policy only allows refunds within 30 days of delivery, so we cannot refund this order."
+              }
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "submit",
+              "arguments": {
+                "summary": "done"
+              }
+            }
+          ]
+        },
+        {
+          "content": "Handled the thread and submitted."
+        }
+      ]
+    },
+    {
+      "match": "You are the operations assistant at Juniper Goods, an online home-goods store.\nToday is Thu 26 Mar 2026 (2026-03-26, IST).\nHandle the open support thread from Suma Tagore.\nRead the store policy before acting and follow it. Use the tools to look things up and make changes. Call submit when you are done.",
+      "steps": [
+        {
+          "toolCalls": [
+            {
+              "name": "read_policy",
+              "arguments": {}
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "reply_to_thread",
+              "arguments": {
+                "thread_id": 3,
+                "body": "Sorry, our policy only allows refunds within 30 days of delivery, so we cannot refund this order."
+              }
+            }
+          ]
+        },
+        {
+          "toolCalls": [
+            {
+              "name": "submit",
+              "arguments": {
+                "summary": "done"
+              }
+            }
+          ]
+        },
+        {
+          "content": "Handled the thread and submitted."
+        }
+      ]
+    }
+  ]
+}

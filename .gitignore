@@ -11,3 +11,5 @@ clients/python/.venv/
 clients/python/uv.lock
 __pycache__/
 .pytest_cache/
+evals/offline/out/
+evals/**/.mcp-evals/
