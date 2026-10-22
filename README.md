@@ -60,7 +60,7 @@ The same `(task, seed, ENV_VERSION)` always produces the same rows. `packages/co
 
 8 tasks × seeds 1–3, 1 repeat, two free OpenRouter models through mcp-evals, $0. All 48 runs were replayed and every reward reproduced exactly.
 
-| Model | Runs | Reward 1 | 95% CI | Steps (median) |
+| Model | Runs | Reward 1 | 95% CI | Steps (mean) |
 |---|---|---|---|---|
 | Nemotron 3 Ultra (free) | 24/24 | 92% (22) | [74–98%] | 7.6 |
 | MiniMax M3.1 Flash (free) | 24/24 | 88% (21) | [69–96%] | 8.0 |
