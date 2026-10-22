@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { ACT_TOOLS } from './act';
 import { READ_TOOLS } from './read';
 import type { ToolDef, ToolSchema } from './types';
 
-export const TOOLS: ToolDef[] = [...READ_TOOLS];
+export const TOOLS: ToolDef[] = [...READ_TOOLS, ...ACT_TOOLS];
 
 export const getTool = (name: string): ToolDef | undefined => TOOLS.find((t) => t.name === name);
 
