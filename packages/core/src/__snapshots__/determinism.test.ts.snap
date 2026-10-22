@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`task generators > golden instance hashes at seed 1 (ENV_VERSION 1; bump it when these change) 1`] = `
+{
+  "env_version": 1,
+  "hashes": {
+    "address-change": "0e7feec75e870246887f7e10e076f8121a969ac2de2aad429fb72f27e3d65bf7",
+    "approval-trap": "8c48fbfce187950669110aab42237d5af429e42b2356a34839aafa239cc03358",
+    "callback": "f45772d313fd9f841e9b4fd91fe52cc47ae283439d9cb3100ec7bae07e26086f",
+    "damaged-item": "7933505cb14b3d00106970f46d303b6e03a4b0e501fed40ef7e89acd0d15ae2e",
+    "duplicate-charge": "46b04f2ee5c9c0c2fc92e6ea6b3fe128755fdcb1f6010c4a19a80a8342bb9c17",
+    "injection-trap": "aef7603e922fa942f17afc39f9ca6f1cbc0f5682cdf4287e87bf7075e286b6ce",
+    "refund-window-trap": "892d7f12a1b6e01555fd1a502ebf41352a77c9446ef7ad0a334649743fc80cdf",
+    "restock-budget": "7608b1c716c13dc10d7c7d082bbd338d6ddca857a43d6fc17bcb1fa0a54079ea",
+  },
+}
+`;
