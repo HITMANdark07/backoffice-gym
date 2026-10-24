@@ -18,9 +18,12 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const replay = getReplay((await params).id);
+  const { id } = await params;
+  const replay = getReplay(id);
   if (!replay) return {};
   return {
+    // ?step= links are the same page; search engines should index one URL.
+    alternates: { canonical: `/runs/${id}` },
     title: `${modelLabel(replay.run.model)} on “${taskTitle(replay.run.task)}” (seed ${replay.run.seed})`,
     description: `A recorded BackOffice Gym run: reward ${rewardLabel(replay.score.reward)} in ${replay.steps.length} steps. Replay every tool call and see how the score was decided.`,
   };

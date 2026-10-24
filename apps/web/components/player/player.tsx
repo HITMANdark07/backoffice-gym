@@ -3,7 +3,7 @@
 import type { Replay } from '@backoffice-gym/replay';
 import { useEffect, useMemo, useReducer } from 'react';
 import { StorePanel } from '@/components/store/store-panel';
-import { initialPlayer, isTypingTarget, parseStepParam, playerReducer, shouldAutoplay } from '@/lib/player-state';
+import { initialPlayer, parseStepParam, playerReducer, shouldAutoplay, shouldIgnoreKey } from '@/lib/player-state';
 import { changedAt, firstFailingStep, scoreAt, stateAt } from '@/lib/replay-state';
 import { AgentPanel } from './agent-panel';
 import { Scorecard } from './scorecard';
@@ -49,7 +49,7 @@ export function Player({ replay, notes = {}, mode = 'full', autoplay = false, st
   useEffect(() => {
     if (mode !== 'full') return;
     const onKey = (e: KeyboardEvent) => {
-      if (isTypingTarget(e.target)) return;
+      if (shouldIgnoreKey(e.key, e.target)) return;
       if (e.key === ' ') {
         e.preventDefault();
         dispatch({ type: 'toggle' });
@@ -62,9 +62,17 @@ export function Player({ replay, notes = {}, mode = 'full', autoplay = false, st
 
   useEffect(() => {
     if (mode !== 'full') return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('step', String(s.step));
-    window.history.replaceState(null, '', url);
+    // Debounced: browsers (Safari) throttle replaceState and throw when it is called too often.
+    const timer = setTimeout(() => {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', String(s.step));
+        window.history.replaceState(null, '', url);
+      } catch {
+        // The link just won't update; playback is unaffected.
+      }
+    }, 250);
+    return () => clearTimeout(timer);
   }, [s.step, mode]);
 
   const state = useMemo(() => stateAt(replay, s.step), [replay, s.step]);

@@ -1,12 +1,15 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RewardChip } from '@/components/reward-chip';
-import { listRuns, taskTitle } from '@/lib/content';
+import { listRuns, stats, taskTitle } from '@/lib/content';
 import { modelLabel } from '@/lib/models';
 
 export const metadata: Metadata = {
   title: 'Recorded runs',
-  description: 'Every recorded BackOffice Gym run: 2 free models × 8 tasks × 3 seeds, each replayable step by step.',
+  description: (() => {
+    const s = stats();
+    return `Every recorded BackOffice Gym run: ${s.models} models × ${s.tasks} tasks × ${s.seedsPerCell} seeds, each replayable step by step.`;
+  })(),
 };
 
 export default function RunsIndex() {
@@ -15,7 +18,10 @@ export default function RunsIndex() {
     <section className="py-8">
       <h1 className="font-serif text-4xl">Recorded runs</h1>
       <p className="mt-2 max-w-2xl text-fg-muted">
-        {runs.length} runs recorded through mcp-evals on 2026-10-22, every one replayed and its reward reproduced exactly.
+        {(() => {
+          const s = stats();
+          return `${s.runs} runs recorded through mcp-evals on ${s.recordedOn}; ${s.reproduced} of ${s.runs} replays reproduced their recorded reward exactly.`;
+        })()}
       </p>
       <div className="mt-6 overflow-x-auto">
         <table className="w-full text-sm">

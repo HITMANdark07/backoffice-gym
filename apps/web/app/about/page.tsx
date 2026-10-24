@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { MAX_STEPS, TOOLS } from '@backoffice-gym/core';
+import { stats } from '@/lib/content';
 import { site } from '@/lib/site';
 
 export const metadata: Metadata = {
@@ -25,7 +27,7 @@ export default function AboutPage() {
 
       <h2 className="mt-10 font-serif text-3xl">How an episode works</h2>
       <p className="mt-2">
-        A task template and a seed generate a fresh store in PostgreSQL: customers, orders, payments, inventory, calendar and an open support thread. The agent gets 16 tools (8 to read, 7 to act, and submit) and at most 30 steps. The same task and seed always produce the same store.
+        A task template and a seed generate a fresh store in PostgreSQL: customers, orders, payments, inventory, calendar and an open support thread. {`The agent gets ${TOOLS.length} tools (${TOOLS.filter((t) => t.kind === 'read').length} to read, ${TOOLS.filter((t) => t.kind === 'act').length} to act, and submit) and at most ${MAX_STEPS} steps.`} The same task and seed always produce the same store.
       </p>
 
       <h2 className="mt-8 font-serif text-3xl">How the reward is decided</h2>
@@ -46,7 +48,7 @@ export default function AboutPage() {
 
       <h2 className="mt-8 font-serif text-3xl">Limitations</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
-        <li>Eight tasks in one store. Six of them were solved every time by the two free models tested, so harder variants are needed.</li>
+        <li>{`${stats().tasks} tasks in one store. ${stats().perfectTasks} of them were solved every time by the ${stats().models} models tested, so harder variants are needed.`}</li>
         <li>One repeat per task and seed: the intervals are wide.</li>
         <li>Reply checks look for facts (an order number, the 30-day rule), not tone.</li>
         <li>The author of the environment also wrote the harness that scores it; all tasks, checks and traces are public.</li>

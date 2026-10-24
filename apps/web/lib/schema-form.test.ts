@@ -37,3 +37,14 @@ describe('schema forms', () => {
     expect(describeApiError(500, 'oops')).toMatch(/something went wrong/i);
   });
 });
+
+describe('episodeClosed', () => {
+  it('detects an episode that cannot take more steps', async () => {
+    const { episodeClosed } = await import('./schema-form');
+    expect(episodeClosed(404, { error: 'episode x not found' })).toBe(true);
+    expect(episodeClosed(200, { step: 4, ok: false, error: 'the episode has expired', done: true })).toBe(true);
+    expect(episodeClosed(200, { step: 4, ok: true, done: true, score: { reward: 1 } })).toBe(false);
+    expect(episodeClosed(200, { step: 2, ok: true, done: false })).toBe(false);
+    expect(episodeClosed(503, {})).toBe(false);
+  });
+});

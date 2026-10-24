@@ -17,6 +17,7 @@ describe('run pages', () => {
     const meta = await generateMetadata(params(damaged.id));
     expect(meta.title).toBe('MiniMax M3.1 Flash on “Damaged item” (seed 1)');
     expect(meta.description).toMatch(/reward 0 in \d+ steps/);
+    expect(meta.alternates?.canonical).toBe(`/runs/${damaged.id}`);
     expect(await generateMetadata(params('zzz'))).toEqual({});
   });
 

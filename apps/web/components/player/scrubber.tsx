@@ -13,7 +13,7 @@ interface Props {
 
 export function Scrubber({ replay, step, playing, failAt, compact = false, onSeek, onToggle }: Props) {
   const seg = (n: number, writes: boolean) => {
-    const color = n === step ? (n === failAt ? 'bg-bad' : 'bg-accent') : n === failAt ? 'bg-bad/60' : n < step ? 'bg-accent/35' : 'bg-border';
+    const color = n === step ? (n === failAt ? 'bg-bad' : 'bg-accent') : n === failAt ? 'bg-bad/60' : n < step ? 'bg-accent/35' : 'bg-fg-meta/40';
     return `block h-2 w-full rounded transition-[filter,transform] duration-150 hover:scale-y-150 hover:brightness-90 ${color} ${writes ? 'ring-1 ring-accent ring-inset' : ''}`;
   };
   return (

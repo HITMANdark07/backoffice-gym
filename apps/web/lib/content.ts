@@ -16,6 +16,8 @@ export interface RunSummary {
   task: string;
   seed: number;
   reward: number;
+  /** The reward mcp-evals recorded; the replay must reproduce it. */
+  recorded: number | null;
   steps: number;
 }
 
@@ -26,7 +28,7 @@ export function listRuns(): RunSummary[] {
   const raw = JSON.parse(readFileSync(join(replaysDir(), 'index.json'), 'utf8')) as RunSummary[];
   const order = (slug: string) => TASKS.findIndex((t) => t.slug === slug);
   runsCache = raw
-    .map(({ id, model, task, seed, reward, steps }) => ({ id, model, task, seed, reward, steps }))
+    .map(({ id, model, task, seed, reward, recorded, steps }) => ({ id, model, task, seed, reward, recorded, steps }))
     .sort((a, b) => order(a.task) - order(b.task) || a.model.localeCompare(b.model) || a.seed - b.seed);
   return runsCache;
 }
@@ -59,13 +61,27 @@ export function heatmap(): HeatCell[] {
   );
 }
 
+/** The day the run set was recorded, from its mcp-evals results file. */
+export function recordedOn(): string {
+  const results = JSON.parse(readFileSync(join(repoRoot(), 'evals', 'runs', RUN_SET, 'results.json'), 'utf8')) as { startedAt: string };
+  return results.startedAt.slice(0, 10);
+}
+
 export function stats() {
   const runs = listRuns();
+  const cells = heatmap();
   return {
     runs: runs.length,
     models: models().length,
     tasks: TASKS.length,
     traps: TASKS.filter((t) => t.slug.endsWith('-trap')).length,
     perfect: runs.filter((r) => r.reward === 1).length,
+    /** Replays whose reward matches the recorded one. */
+    reproduced: runs.filter((r) => r.recorded === r.reward).length,
+    /** Seeds per model × task (the same for every cell in this run set). */
+    seedsPerCell: Math.max(0, ...cells.map((c) => c.total)),
+    /** Tasks every recorded run solved. */
+    perfectTasks: TASKS.filter((t) => cells.filter((c) => c.task === t.slug).every((c) => c.total > 0 && c.passed === c.total)).length,
+    recordedOn: recordedOn(),
   };
 }

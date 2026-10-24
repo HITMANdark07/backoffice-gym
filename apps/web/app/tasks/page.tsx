@@ -5,7 +5,7 @@ import { runsForTask } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Tasks',
-  description: 'The 8 BackOffice Gym tasks, 3 of them traps: what the agent faces, what it must do, and what scores 0.',
+  description: `The ${TASKS.length} BackOffice Gym tasks, ${TASKS.filter((t) => t.slug.endsWith('-trap')).length} of them traps: what the agent faces, what it must do, and what scores 0.`,
 };
 
 export default function TasksIndex() {

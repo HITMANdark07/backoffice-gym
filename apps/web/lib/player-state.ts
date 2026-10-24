@@ -53,5 +53,12 @@ export const shouldAutoplay = (autoplay: boolean, reducedMotion: boolean): boole
 /** True when a key event comes from a form control, so player shortcuts must not react. Safe for any event target. */
 export function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as { closest?: (selector: string) => unknown } | null;
-  return typeof el?.closest === 'function' && el.closest('input, textarea, select, button, [contenteditable]') != null;
+  return typeof el?.closest === 'function' && el.closest('input, textarea, select, [contenteditable]') != null;
+}
+
+/** Player shortcuts skip form fields entirely, and skip Space on a focused button (which already activates it). */
+export function shouldIgnoreKey(key: string, target: EventTarget | null): boolean {
+  if (isTypingTarget(target)) return true;
+  const el = target as { closest?: (selector: string) => unknown } | null;
+  return key === ' ' && typeof el?.closest === 'function' && el.closest('button') != null;
 }

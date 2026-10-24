@@ -48,3 +48,11 @@ export function describeApiError(status: number, body: unknown): string {
   if (status === 400 && message) return message;
   return 'Something went wrong. Try again.';
 }
+
+/** True when the episode can take no more steps and has no score to show (expired, unknown, or finished without one). */
+export function episodeClosed(status: number, body: unknown): boolean {
+  if (status === 404) return true;
+  if (status !== 200 || typeof body !== 'object' || body === null) return false;
+  const b = body as { done?: unknown; score?: unknown };
+  return b.done === true && b.score == null;
+}

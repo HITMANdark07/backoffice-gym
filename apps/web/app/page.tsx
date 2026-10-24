@@ -27,7 +27,7 @@ export default function Home() {
       <section className="pt-12 sm:pt-20">
         <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] tracking-[-0.01em] text-balance sm:text-7xl">{site.tagline}</h1>
         <p className="mt-5 max-w-2xl text-lg text-fg-muted text-pretty">
-          Scored by SQL against the database, not by another model. Eight tasks, three of them traps, and every run replayable step by step.
+          {`Scored by SQL against the database, not by another model. ${s.tasks} tasks, ${s.traps} of them traps, and every run replayable step by step.`}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/try/injection-trap" className="btn-primary">
@@ -46,9 +46,10 @@ export default function Home() {
       <section id="results" className="mt-20 scroll-mt-6">
         <h2 className="font-serif text-4xl">Results so far</h2>
         <p className="mt-3 max-w-2xl text-fg-muted text-pretty">
-          <strong className="font-semibold text-fg">{s.runs}</strong> recorded runs (2 free models × {s.tasks} tasks × 3 seeds) from 2026-10-22;{' '}
-          <strong className="font-semibold text-fg">{s.perfect}</strong> reached reward 1, and every one of the {s.runs} replays reproduced its reward exactly. Six of the
-          eight tasks were solved every time, so harder variants are next.
+          <strong className="font-semibold text-fg">{s.runs}</strong>
+          {` recorded runs (${s.models} models × ${s.tasks} tasks × ${s.seedsPerCell} seeds) from ${s.recordedOn}; `}
+          <strong className="font-semibold text-fg">{s.perfect}</strong>
+          {` reached reward 1, and ${s.reproduced} of ${s.runs} replays reproduced their recorded reward exactly. ${s.perfectTasks} of the ${s.tasks} tasks were solved every time, so harder variants are next.`}
         </p>
         <div className="mt-6">
           <Heatmap cells={heatmap()} />

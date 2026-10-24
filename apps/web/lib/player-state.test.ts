@@ -45,3 +45,17 @@ describe('isTypingTarget', () => {
     expect(isTypingTarget(null)).toBe(false);
   });
 });
+
+describe('shouldIgnoreKey', () => {
+  it('lets arrows through after a button was clicked, but leaves Space to the button', async () => {
+    const { shouldIgnoreKey } = await import('./player-state');
+    const button = { closest: (sel: string) => (sel === 'button' ? {} : null) };
+    const input = { closest: (sel: string) => (sel.includes('input') ? {} : null) };
+    expect(shouldIgnoreKey('ArrowRight', button as unknown as EventTarget)).toBe(false);
+    expect(shouldIgnoreKey('ArrowLeft', button as unknown as EventTarget)).toBe(false);
+    expect(shouldIgnoreKey(' ', button as unknown as EventTarget)).toBe(true);
+    expect(shouldIgnoreKey('ArrowRight', input as unknown as EventTarget)).toBe(true);
+    expect(shouldIgnoreKey(' ', {} as EventTarget)).toBe(false);
+    expect(shouldIgnoreKey('ArrowRight', null)).toBe(false);
+  });
+});

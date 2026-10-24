@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { CheckIcon, CrossIcon } from '@/components/icons';
 import { checkLabel, rewardLabel, truncate } from '@/lib/format';
-import { argsFrom, describeApiError, fieldsFor } from '@/lib/schema-form';
+import { argsFrom, describeApiError, episodeClosed, fieldsFor } from '@/lib/schema-form';
 
 interface ToolInfo {
   name: string;
@@ -42,11 +42,13 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
   const [score, setScore] = useState<ScoreResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [closed, setClosed] = useState(false);
 
   const current = episode?.tools.find((t) => t.name === tool);
   const fields = useMemo(() => (current ? fieldsFor(current.input_schema) : []), [current]);
 
   async function start() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     const r = await call('/api/episodes', { task });
@@ -56,16 +58,21 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
     setEpisode({ id: b.episode_id, prompt: b.task.prompt, tools: b.tools });
     setLog([]);
     setScore(null);
+    setClosed(false);
     setTool('read_policy');
     setValues({});
   }
 
   async function run() {
-    if (!episode) return;
+    if (!episode || busy) return;
     setBusy(true);
     setError(null);
     const r = await call(`/api/episodes/${episode.id}/step`, { tool, args: argsFrom(fields, values) });
     setBusy(false);
+    if (episodeClosed(r.status, r.body)) {
+      setClosed(true);
+      return setError(r.status === 404 ? describeApiError(404, r.body) : 'This episode has ended without a score (it may have expired). Start a new one.');
+    }
     if (r.status !== 200) return setError(describeApiError(r.status, r.body));
     const s = r.body as { step: number; ok: boolean; result?: unknown; error?: string; done: boolean; score?: ScoreResult };
     setLog((l) => [...l, { step: s.step, tool, ok: s.ok, text: s.ok ? truncate(JSON.stringify(s.result, null, 2), 1500) : (s.error ?? 'error') }]);
@@ -91,7 +98,17 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
           <p className="font-mono text-xs text-fg-meta">YOUR TASK</p>
           <p className="mt-2 whitespace-pre-wrap break-words text-sm">{episode.prompt}</p>
         </div>
-        {!score && (
+        {error && (
+          <div role="alert" className="rounded-xl border border-bad/40 bg-bad-bg p-4 text-sm text-bad">
+            <p>{error}</p>
+            {closed && (
+              <button type="button" onClick={start} disabled={busy} className="btn-primary mt-3">
+                {busy ? 'Starting…' : 'Start a new episode'}
+              </button>
+            )}
+          </div>
+        )}
+        {!score && !closed && (
           <form
             className="space-y-3 rounded-xl border border-border bg-surface p-4"
             onSubmit={(e) => {
@@ -136,7 +153,6 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
             <button type="submit" disabled={busy} className="btn-primary">
               {busy ? 'Running…' : `Run ${tool}`}
             </button>
-            {error && <p role="alert" className="text-sm text-bad">{error}</p>}
           </form>
         )}
         {score && (
@@ -160,15 +176,15 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={start} className="btn-secondary mt-4">
-              Try another seed
+            <button type="button" onClick={start} disabled={busy} className="btn-secondary mt-4">
+              {busy ? 'Starting…' : 'Try another seed'}
             </button>
           </div>
         )}
       </div>
       <ol className="min-w-0 space-y-2" aria-label="Your steps">
-        {log.map((e) => (
-          <li key={e.step} className="rounded-xl border border-border bg-surface p-3">
+        {log.map((e, i) => (
+          <li key={i} className="rounded-xl border border-border bg-surface p-3">
             <p className="font-mono text-xs text-fg-meta">
               STEP {e.step} · {e.tool}
             </p>

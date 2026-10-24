@@ -106,6 +106,12 @@
   a:hover {
     text-decoration-color: var(--accent);
   }
+  /* Links in running text must look like links (WCAG 1.4.1); styled links (nav, buttons, rows) opt out by having a class. */
+  a:not([class]) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent);
+  }
   table,
   .font-mono {
     font-variant-numeric: tabular-nums;
@@ -172,6 +178,8 @@
   }
 }
 .changed {
+  /* Small meta text stays at AA contrast on the highlight in both themes. */
+  --fg-meta: var(--fg-muted);
   background: var(--hl);
   box-shadow: inset 3px 0 0 var(--hl-edge);
   animation: changed-in 650ms cubic-bezier(0.16, 1, 0.3, 1);
