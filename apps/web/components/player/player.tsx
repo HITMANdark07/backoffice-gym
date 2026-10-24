@@ -3,7 +3,7 @@
 import type { Replay } from '@backoffice-gym/replay';
 import { useEffect, useMemo, useReducer } from 'react';
 import { StorePanel } from '@/components/store/store-panel';
-import { initialPlayer, parseStepParam, playerReducer, shouldAutoplay } from '@/lib/player-state';
+import { initialPlayer, isTypingTarget, parseStepParam, playerReducer, shouldAutoplay } from '@/lib/player-state';
 import { changedAt, firstFailingStep, scoreAt, stateAt } from '@/lib/replay-state';
 import { AgentPanel } from './agent-panel';
 import { Scorecard } from './scorecard';
@@ -49,7 +49,7 @@ export function Player({ replay, notes = {}, mode = 'full', autoplay = false, st
   useEffect(() => {
     if (mode !== 'full') return;
     const onKey = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement | null)?.closest('input, textarea, select, button, [contenteditable]')) return;
+      if (isTypingTarget(e.target)) return;
       if (e.key === ' ') {
         e.preventDefault();
         dispatch({ type: 'toggle' });

@@ -20,7 +20,7 @@ export function Scorecard({ replay, step, score }: { replay: Replay; step: numbe
   const done = step >= replay.steps.length;
   const checks = (score ?? replay.score).checks;
   const headline =
-    step === 0 ? 'Scorecard · not started' : done ? `Reward ${rewardLabel(replay.score.reward)}` : `If it stopped here: ${rewardLabel(score?.reward ?? 0)}`;
+    step === 0 ? 'not started' : done ? `Reward ${rewardLabel(replay.score.reward)}` : `If it stopped here: ${rewardLabel(score?.reward ?? 0)}`;
   const failing = step > 0 && checks.some((c) => c.kind === 'forbidden' && !c.passed);
   return (
     <div className="border-t border-border p-4">

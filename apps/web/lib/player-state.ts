@@ -49,3 +49,9 @@ export function parseStepParam(search: string, total: number): number | null {
 }
 
 export const shouldAutoplay = (autoplay: boolean, reducedMotion: boolean): boolean => autoplay && !reducedMotion;
+
+/** True when a key event comes from a form control, so player shortcuts must not react. Safe for any event target. */
+export function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as { closest?: (selector: string) => unknown } | null;
+  return typeof el?.closest === 'function' && el.closest('input, textarea, select, button, [contenteditable]') != null;
+}

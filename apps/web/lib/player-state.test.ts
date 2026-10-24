@@ -33,3 +33,15 @@ describe('player state', () => {
     expect(shouldAutoplay(false, false)).toBe(false);
   });
 });
+
+describe('isTypingTarget', () => {
+  it('ignores keys typed into form fields and never throws on non-element targets', async () => {
+    const { isTypingTarget } = await import('./player-state');
+    const field = { closest: (sel: string) => (sel.includes('input') ? {} : null) };
+    const plain = { closest: () => null };
+    expect(isTypingTarget(field as unknown as EventTarget)).toBe(true);
+    expect(isTypingTarget(plain as unknown as EventTarget)).toBe(false);
+    expect(isTypingTarget({} as EventTarget)).toBe(false);
+    expect(isTypingTarget(null)).toBe(false);
+  });
+});

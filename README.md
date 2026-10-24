@@ -2,7 +2,7 @@
 
 An RL environment where AI agents run the operations desk of **Juniper Goods**, a fictional online home-goods store. Each episode is generated from a task and a seed; the agent works through 16 tools; a scorer computes the reward from the **final database state** with SQL checks, not an LLM judge.
 
-Status: **M2**: the environment core plus its ways in (MCP server, HTTP RL API, Python client, mcp-evals scoring, replays). The demo site and live runs on your own keys come next; see [`docs/superpowers/specs/2026-10-22-backoffice-gym-design.md`](docs/superpowers/specs/2026-10-22-backoffice-gym-design.md).
+Status: **M3**: the environment, its ways in (MCP server, HTTP RL API, Python client, mcp-evals scoring, replays) and a demo site (`apps/web`). Live runs on your own API keys come next; see [`docs/superpowers/specs/2026-10-22-backoffice-gym-design.md`](docs/superpowers/specs/2026-10-22-backoffice-gym-design.md).
 
 ## Tasks
 
@@ -47,6 +47,15 @@ console.log(score);
 ## Determinism
 
 The same `(task, seed, ENV_VERSION)` always produces the same rows. `packages/core/src/determinism.test.ts` pins a hash per task at seed 1; if you change a generator, bump `ENV_VERSION` in `packages/core/src/episode/env.ts` and update the snapshot (`pnpm vitest run -u packages/core/src/determinism.test.ts`).
+
+## Demo site
+
+```bash
+pnpm web          # http://localhost:3100 (dev)
+pnpm web:build && pnpm --filter @backoffice-gym/web start
+```
+
+The landing page replays featured runs; every recorded run has a page with a step-by-step player (Space to play, ← → to step, `?step=n` to link a step); every task has a page with its checks and recorded runs; "Try it" runs a live episode through the same API and scorer. Pages are prerendered from `evals/replays/`; only "Try it" and `/api` need the database.
 
 ## Ways in
 
