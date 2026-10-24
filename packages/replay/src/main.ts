@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { createEnv } from '@shopgym/core';
-import { createDb, devDatabaseUrl } from '@shopgym/db';
+import { createEnv } from '@backoffice-gym/core';
+import { createDb, devDatabaseUrl } from '@backoffice-gym/db';
 import { replayTrace, ReplayMismatchError } from './replay';
 import { readTraces } from './traces';
 

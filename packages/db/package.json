@@ -1,5 +1,5 @@
 {
-  "name": "@shopgym/db",
+  "name": "@backoffice-gym/db",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -8,7 +8,7 @@
   "scripts": {
     "generate": "prisma generate",
     "migrate:dev": "prisma migrate dev",
-    "migrate:test": "DATABASE_URL=${SHOPGYM_TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/shopgym_test} prisma migrate deploy",
+    "migrate:test": "DATABASE_URL=${BACKOFFICE_GYM_TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/backoffice_gym_test} prisma migrate deploy",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {

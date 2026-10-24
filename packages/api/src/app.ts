@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { EnvError, GENERIC_CHECKS, InfraError, MAX_SEED, TASKS, type Env } from '@shopgym/core';
+import { EnvError, GENERIC_CHECKS, InfraError, MAX_SEED, TASKS, type Env } from '@backoffice-gym/core';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 

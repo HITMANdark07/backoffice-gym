@@ -3,11 +3,11 @@ import json
 import httpx
 import pytest
 
-from shopgym import ShopGym, ShopGymError
+from backoffice_gym import BackOfficeGym, BackOfficeGymError
 
 
 def fake_api():
-    """An in-memory stand-in for the ShopGym API, enough to exercise the client."""
+    """An in-memory stand-in for the BackOffice Gym API, enough to exercise the client."""
     state = {"episodes": {}, "seen": []}
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -41,7 +41,7 @@ def fake_api():
 
 def test_reset_step_score_flow():
     state, http = fake_api()
-    with ShopGym(client=http) as env:
+    with BackOfficeGym(client=http) as env:
         assert env.tasks()[0]["slug"] == "damaged-item"
         obs = env.reset("damaged-item", seed=7)
         assert obs["episode_id"] == "ep-1" and env.episode_id == "ep-1"
@@ -56,18 +56,18 @@ def test_reset_step_score_flow():
 
 def test_seed_is_omitted_when_not_given():
     state, http = fake_api()
-    ShopGym(client=http).reset("damaged-item")
+    BackOfficeGym(client=http).reset("damaged-item")
     assert ("POST", "/api/episodes", {"task": "damaged-item"}) in state["seen"]
 
 
 def test_errors_carry_status_and_code():
     _, http = fake_api()
-    env = ShopGym(client=http)
-    with pytest.raises(ShopGymError) as err:
+    env = BackOfficeGym(client=http)
+    with pytest.raises(BackOfficeGymError) as err:
         env.reset("x")
     assert err.value.status == 400 and err.value.code == "unknown_task"
     env.reset("damaged-item")
-    with pytest.raises(ShopGymError) as limited:
+    with pytest.raises(BackOfficeGymError) as limited:
         env.step("slow_down")
     assert limited.value.status == 429
 
@@ -75,4 +75,4 @@ def test_errors_carry_status_and_code():
 def test_step_before_reset_is_a_clear_error():
     _, http = fake_api()
     with pytest.raises(RuntimeError, match="reset"):
-        ShopGym(client=http).step("read_policy")
+        BackOfficeGym(client=http).step("read_policy")

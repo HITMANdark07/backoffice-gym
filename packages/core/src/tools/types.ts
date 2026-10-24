@@ -1,4 +1,4 @@
-import type { Tx } from '@shopgym/db';
+import type { Tx } from '@backoffice-gym/db';
 import type { z } from 'zod';
 
 export interface ToolContext {

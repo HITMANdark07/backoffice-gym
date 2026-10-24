@@ -1,18 +1,18 @@
-// Writes evals/shopgym.yaml (free models, 8 tasks × seeds 1–3) and the offline suite + mock script for a no-network check.
+// Writes evals/backoffice-gym.yaml (free models, 8 tasks × seeds 1–3) and the offline suite + mock script for a no-network check.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { TASKS } from '@shopgym/core';
+import { TASKS } from '@backoffice-gym/core';
 import { buildSuiteYaml, FREE_MODELS } from '../src/suite';
 
 const evals = fileURLToPath(new URL('../../../evals/', import.meta.url));
 mkdirSync(`${evals}offline`, { recursive: true });
 
-writeFileSync(`${evals}shopgym.yaml`, buildSuiteYaml({ models: FREE_MODELS, seeds: [1, 2, 3] }));
+writeFileSync(`${evals}backoffice-gym.yaml`, buildSuiteYaml({ models: FREE_MODELS, seeds: [1, 2, 3] }));
 
 const OFFLINE = ['damaged-item', 'refund-window-trap', 'injection-trap'];
 writeFileSync(
-  `${evals}offline/shopgym-offline.yaml`,
-  buildSuiteYaml({ models: [{ id: 'mock/perfect' }], seeds: [1], slugs: OFFLINE, name: 'shopgym-offline', serverPath: '{suite_dir}/../../packages/mcp/bin/shopgym-mcp.mjs' }),
+  `${evals}offline/backoffice-gym-offline.yaml`,
+  buildSuiteYaml({ models: [{ id: 'mock/perfect' }], seeds: [1], slugs: OFFLINE, name: 'backoffice-gym-offline', serverPath: '{suite_dir}/../../packages/mcp/bin/backoffice-gym-mcp.mjs' }),
 );
 
 /** Perfect plays for seed 1, built from each instance's hidden expected outcome (offline check only). */
@@ -41,4 +41,4 @@ const entries = OFFLINE.map((slug) => {
   };
 });
 writeFileSync(`${evals}offline/mock-script.json`, `${JSON.stringify({ entries }, null, 2)}\n`);
-console.log('wrote evals/shopgym.yaml, evals/offline/shopgym-offline.yaml, evals/offline/mock-script.json');
+console.log('wrote evals/backoffice-gym.yaml, evals/offline/backoffice-gym-offline.yaml, evals/offline/mock-script.json');

@@ -1,5 +1,5 @@
-import { createEnv, InfraError, type Env } from '@shopgym/core';
-import { createDb, testDatabaseUrl } from '@shopgym/db';
+import { createEnv, InfraError, type Env } from '@backoffice-gym/core';
+import { createDb, testDatabaseUrl } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createApi } from './app';
 

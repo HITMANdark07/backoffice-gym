@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { createDb, testDatabaseUrl, type ShopDb } from '@shopgym/db';
+import { createDb, testDatabaseUrl, type ShopDb } from '@backoffice-gym/db';
 import { insertRows } from '../store/insert';
 import type { StoreRows } from '../store/types';
 

@@ -1,4 +1,4 @@
-# ShopGym M1: Environment Core Implementation Plan
+# BackOffice Gym M1: Environment Core Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -6,8 +6,8 @@
 
 **Architecture:**
 - **pnpm monorepo** with two packages.
-- **`@shopgym/db`:** the Prisma 7 schema and migrations for Postgres schema `shopgym`, a client factory on `@prisma/adapter-pg`, and a canonical dump, hash and diff of one episode's rows.
-- **`@shopgym/core`:**
+- **`@backoffice-gym/db`:** the Prisma 7 schema and migrations for Postgres schema `backoffice_gym`, a client factory on `@prisma/adapter-pg`, and a canonical dump, hash and diff of one episode's rows.
+- **`@backoffice-gym/core`:**
   - a seeded store generator;
   - the tools, each running inside one transaction per step;
   - task templates (generator, checks, allow-list);
@@ -21,19 +21,19 @@
 - Prisma 7.10.1 with `@prisma/adapter-pg` 7.10.1.
 - zod 4.6.7, `@faker-js/faker` 10.6.0 and Vitest 2.
 
-**Spec:** `docs/superpowers/specs/2026-10-22-shopgym-design.md`. Read §2 to §6, §10 and §11 before starting.
+**Spec:** `docs/superpowers/specs/2026-10-22-backoffice-gym-design.md`. Read §2 to §6, §10 and §11 before starting.
 
 ## Global Constraints
 
 - **Node and package manager:** Node ≥ 20.19, ESM only (`"type": "module"`), pnpm 10.33.0.
-- **No Docker.** Use the local Homebrew PostgreSQL 17 on `localhost:5432` and only the databases `shopgym_dev` and `shopgym_test`. Never touch any other database on the server.
+- **No Docker.** Use the local Homebrew PostgreSQL 17 on `localhost:5432` and only the databases `backoffice_gym_dev` and `backoffice_gym_test`. Never touch any other database on the server.
 - **Database URLs:**
-  - default `postgresql://$USER@localhost:5432/shopgym_dev`;
-  - test `postgresql://$USER@localhost:5432/shopgym_test`;
-  - override with `SHOPGYM_DATABASE_URL` and `SHOPGYM_TEST_DATABASE_URL`.
+  - default `postgresql://$USER@localhost:5432/backoffice_gym_dev`;
+  - test `postgresql://$USER@localhost:5432/backoffice_gym_test`;
+  - override with `BACKOFFICE_GYM_DATABASE_URL` and `BACKOFFICE_GYM_TEST_DATABASE_URL`.
   - No `.env` files are read or created.
 - **Prisma:** exactly `prisma@7.10.1`, `@prisma/client@7.10.1` and `@prisma/adapter-pg@7.10.1`, with the `prisma-client` generator and output `packages/db/src/generated/prisma` (git-ignored). Never use Prisma 8.
-- **Postgres schema:** every table is in schema `shopgym`, set with `schemas = ["shopgym"]` and `@@schema("shopgym")`.
+- **Postgres schema:** every table is in schema `backoffice_gym`, set with `schemas = ["backoffice-gym"]` and `@@schema("backoffice_gym")`.
 - **Primary keys:** every environment table has `episode_id` and the composite primary key `(episode_id, id)`. Deleting an episode cascades to all of its rows.
 - **Determinism:**
   - The same `(task, seed, ENV_VERSION)` always gives byte-identical rows.
@@ -72,7 +72,7 @@ These five inputs are likely to bite a real caller, and no other task tests them
 ## Shared interfaces (reference for all tasks)
 
 ```ts
-// @shopgym/db
+// @backoffice-gym/db
 createDb(url: string): ShopDb                       // PrismaClient on adapter-pg
 type ShopDb = PrismaClient; type Tx = Prisma.TransactionClient
 devDatabaseUrl(): string; testDatabaseUrl(): string
@@ -85,7 +85,7 @@ diffDumps(before: Dump, after: Dump): DiffEntry[]
 interface DiffEntry { table: TableName; op: 'add'|'remove'|'change'; id: number; before: Row|null; after: Row|null; fields: string[] }
 toJson(v: unknown): Prisma.InputJsonValue
 
-// @shopgym/core
+// @backoffice-gym/core
 createEnv(db: ShopDb, opts?: { tasks?: AnyTask[]; now?: () => Date }): Env
 interface Env { reset(r: ResetRequest): Promise<ResetResult>; step(id: string, r: StepRequest): Promise<StepResult>;
   score(id: string): Promise<ScoreResult>; getEpisode(id: string): Promise<EpisodeInfo>; expireEpisodes(limit?: number): Promise<number> }
@@ -112,7 +112,7 @@ TASKS: AnyTask[]; getTask(slug): AnyTask | undefined
 `package.json`:
 ```json
 {
-  "name": "shopgym",
+  "name": "backoffice-gym",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -120,13 +120,13 @@ TASKS: AnyTask[]; getTask(slug): AnyTask | undefined
   "engines": { "node": ">=20.19" },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "db:generate": "pnpm --filter @shopgym/db generate",
-    "db:migrate:test": "pnpm --filter @shopgym/db migrate:test",
+    "db:generate": "pnpm --filter @backoffice-gym/db generate",
+    "db:migrate:test": "pnpm --filter @backoffice-gym/db migrate:test",
     "test": "pnpm db:generate && pnpm db:migrate:test && vitest run",
     "typecheck": "pnpm db:generate && pnpm -r typecheck"
   },
   "devDependencies": {
-    "@shopgym/db": "workspace:*",
+    "@backoffice-gym/db": "workspace:*",
     "@types/node": "^20.11.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
@@ -189,12 +189,12 @@ export default defineConfig({
 
 `vitest.global-setup.ts` gives each run a clean test database. Every test uses its own episodes, so files can still run in parallel.
 ```ts
-import { createDb, testDatabaseUrl } from '@shopgym/db';
+import { createDb, testDatabaseUrl } from '@backoffice-gym/db';
 
 export async function setup(): Promise<void> {
   const db = createDb(testDatabaseUrl());
   try {
-    await db.$executeRawUnsafe('TRUNCATE "shopgym"."episodes" CASCADE');
+    await db.$executeRawUnsafe('TRUNCATE "backoffice_gym"."episodes" CASCADE');
   } finally {
     await db.$disconnect();
   }
@@ -211,7 +211,7 @@ packages/db/src/generated/
 `packages/db/package.json`:
 ```json
 {
-  "name": "@shopgym/db",
+  "name": "@backoffice-gym/db",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -220,7 +220,7 @@ packages/db/src/generated/
   "scripts": {
     "generate": "prisma generate",
     "migrate:dev": "prisma migrate dev",
-    "migrate:test": "DATABASE_URL=${SHOPGYM_TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/shopgym_test} prisma migrate deploy",
+    "migrate:test": "DATABASE_URL=${BACKOFFICE_GYM_TEST_DATABASE_URL:-postgresql://$USER@localhost:5432/backoffice_gym_test} prisma migrate deploy",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -248,8 +248,8 @@ export default defineConfig({
   datasource: {
     url:
       process.env.DATABASE_URL ??
-      process.env.SHOPGYM_DATABASE_URL ??
-      `postgresql://${process.env.USER}@localhost:5432/shopgym_dev`,
+      process.env.BACKOFFICE_GYM_DATABASE_URL ??
+      `postgresql://${process.env.USER}@localhost:5432/backoffice_gym_dev`,
   },
 });
 ```
@@ -265,7 +265,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["shopgym"]
+  schemas  = ["backoffice_gym"]
 }
 
 model Episode {
@@ -303,7 +303,7 @@ model Episode {
 
   @@index([expires_at])
   @@map("episodes")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Customer {
@@ -321,7 +321,7 @@ model Customer {
   @@id([episode_id, id])
   @@unique([episode_id, email])
   @@map("customers")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Product {
@@ -344,7 +344,7 @@ model Product {
   @@id([episode_id, id])
   @@unique([episode_id, sku])
   @@map("products")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Staff {
@@ -359,7 +359,7 @@ model Staff {
 
   @@id([episode_id, id])
   @@map("staff")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Order {
@@ -383,7 +383,7 @@ model Order {
 
   @@id([episode_id, id])
   @@map("orders")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model OrderItem {
@@ -400,7 +400,7 @@ model OrderItem {
 
   @@id([episode_id, id])
   @@map("order_items")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Payment {
@@ -417,7 +417,7 @@ model Payment {
 
   @@id([episode_id, id])
   @@map("payments")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Refund {
@@ -435,7 +435,7 @@ model Refund {
 
   @@id([episode_id, id])
   @@map("refunds")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Replacement {
@@ -452,7 +452,7 @@ model Replacement {
 
   @@id([episode_id, id])
   @@map("replacements")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model PurchaseOrder {
@@ -469,7 +469,7 @@ model PurchaseOrder {
 
   @@id([episode_id, id])
   @@map("purchase_orders")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Approval {
@@ -486,7 +486,7 @@ model Approval {
 
   @@id([episode_id, id])
   @@map("approvals")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Thread {
@@ -502,7 +502,7 @@ model Thread {
 
   @@id([episode_id, id])
   @@map("threads")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Message {
@@ -518,7 +518,7 @@ model Message {
 
   @@id([episode_id, id])
   @@map("messages")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model CalendarEvent {
@@ -536,7 +536,7 @@ model CalendarEvent {
 
   @@id([episode_id, id])
   @@map("calendar_events")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Budget {
@@ -550,7 +550,7 @@ model Budget {
 
   @@id([episode_id, id])
   @@map("budget")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Policy {
@@ -563,7 +563,7 @@ model Policy {
 
   @@id([episode_id, id])
   @@map("policy")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model ActionLog {
@@ -579,7 +579,7 @@ model ActionLog {
 
   @@id([episode_id, id])
   @@map("action_log")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 ```
 
@@ -588,8 +588,8 @@ model ActionLog {
 Run from the repo root:
 ```bash
 pnpm install
-createdb shopgym_dev
-createdb shopgym_test
+createdb backoffice_gym_dev
+createdb backoffice_gym_test
 cd packages/db && pnpm exec prisma migrate dev --create-only --name init && cd ../..
 ```
 Expected:
@@ -604,22 +604,22 @@ If `createdb` reports that a database already exists, stop and ask the owner. Do
 Prisma can't declare CHECK constraints. Append this block to the end of the generated `packages/db/prisma/migrations/<timestamp>_init/migration.sql`:
 ```sql
 -- Invariants Prisma cannot declare
-ALTER TABLE "shopgym"."episodes" ADD CONSTRAINT "episodes_status_check" CHECK (status IN ('active','scored','expired'));
-ALTER TABLE "shopgym"."customers" ADD CONSTRAINT "customers_tier_check" CHECK (tier IN ('standard','vip'));
-ALTER TABLE "shopgym"."products" ADD CONSTRAINT "products_values_check" CHECK (stock >= 0 AND reorder_threshold >= 0 AND reorder_qty > 0 AND unit_price_cents > 0 AND unit_cost_cents > 0);
-ALTER TABLE "shopgym"."staff" ADD CONSTRAINT "staff_role_check" CHECK (role IN ('support','manager','buyer'));
-ALTER TABLE "shopgym"."orders" ADD CONSTRAINT "orders_status_check" CHECK (status IN ('pending','processing','shipped','delivered','refunded','partially_refunded','cancelled'));
-ALTER TABLE "shopgym"."orders" ADD CONSTRAINT "orders_total_check" CHECK (total_cents >= 0);
-ALTER TABLE "shopgym"."order_items" ADD CONSTRAINT "order_items_values_check" CHECK (qty > 0 AND unit_price_cents > 0);
-ALTER TABLE "shopgym"."payments" ADD CONSTRAINT "payments_values_check" CHECK (amount_cents > 0 AND status IN ('captured','refunded'));
-ALTER TABLE "shopgym"."refunds" ADD CONSTRAINT "refunds_amount_check" CHECK (amount_cents > 0);
-ALTER TABLE "shopgym"."replacements" ADD CONSTRAINT "replacements_qty_check" CHECK (qty > 0);
-ALTER TABLE "shopgym"."purchase_orders" ADD CONSTRAINT "purchase_orders_values_check" CHECK (qty > 0 AND total_cents = qty * unit_cost_cents);
-ALTER TABLE "shopgym"."approvals" ADD CONSTRAINT "approvals_values_check" CHECK (amount_cents > 0 AND status IN ('pending'));
-ALTER TABLE "shopgym"."threads" ADD CONSTRAINT "threads_status_check" CHECK (status IN ('open','replied'));
-ALTER TABLE "shopgym"."messages" ADD CONSTRAINT "messages_author_check" CHECK (author IN ('customer','agent','staff'));
-ALTER TABLE "shopgym"."calendar_events" ADD CONSTRAINT "calendar_events_time_check" CHECK (ends_at > starts_at);
-ALTER TABLE "shopgym"."budget" ADD CONSTRAINT "budget_values_check" CHECK (restock_budget_cents >= 0 AND spent_cents >= 0);
+ALTER TABLE "backoffice_gym"."episodes" ADD CONSTRAINT "episodes_status_check" CHECK (status IN ('active','scored','expired'));
+ALTER TABLE "backoffice_gym"."customers" ADD CONSTRAINT "customers_tier_check" CHECK (tier IN ('standard','vip'));
+ALTER TABLE "backoffice_gym"."products" ADD CONSTRAINT "products_values_check" CHECK (stock >= 0 AND reorder_threshold >= 0 AND reorder_qty > 0 AND unit_price_cents > 0 AND unit_cost_cents > 0);
+ALTER TABLE "backoffice_gym"."staff" ADD CONSTRAINT "staff_role_check" CHECK (role IN ('support','manager','buyer'));
+ALTER TABLE "backoffice_gym"."orders" ADD CONSTRAINT "orders_status_check" CHECK (status IN ('pending','processing','shipped','delivered','refunded','partially_refunded','cancelled'));
+ALTER TABLE "backoffice_gym"."orders" ADD CONSTRAINT "orders_total_check" CHECK (total_cents >= 0);
+ALTER TABLE "backoffice_gym"."order_items" ADD CONSTRAINT "order_items_values_check" CHECK (qty > 0 AND unit_price_cents > 0);
+ALTER TABLE "backoffice_gym"."payments" ADD CONSTRAINT "payments_values_check" CHECK (amount_cents > 0 AND status IN ('captured','refunded'));
+ALTER TABLE "backoffice_gym"."refunds" ADD CONSTRAINT "refunds_amount_check" CHECK (amount_cents > 0);
+ALTER TABLE "backoffice_gym"."replacements" ADD CONSTRAINT "replacements_qty_check" CHECK (qty > 0);
+ALTER TABLE "backoffice_gym"."purchase_orders" ADD CONSTRAINT "purchase_orders_values_check" CHECK (qty > 0 AND total_cents = qty * unit_cost_cents);
+ALTER TABLE "backoffice_gym"."approvals" ADD CONSTRAINT "approvals_values_check" CHECK (amount_cents > 0 AND status IN ('pending'));
+ALTER TABLE "backoffice_gym"."threads" ADD CONSTRAINT "threads_status_check" CHECK (status IN ('open','replied'));
+ALTER TABLE "backoffice_gym"."messages" ADD CONSTRAINT "messages_author_check" CHECK (author IN ('customer','agent','staff'));
+ALTER TABLE "backoffice_gym"."calendar_events" ADD CONSTRAINT "calendar_events_time_check" CHECK (ends_at > starts_at);
+ALTER TABLE "backoffice_gym"."budget" ADD CONSTRAINT "budget_values_check" CHECK (restock_budget_cents >= 0 AND spent_cents >= 0);
 ```
 Then apply it and generate the client:
 ```bash
@@ -637,7 +637,7 @@ import { PrismaClient, type Prisma } from './generated/prisma/client';
 export type ShopDb = PrismaClient;
 export type Tx = Prisma.TransactionClient;
 
-/** Prisma client for a ShopGym database, on the node-postgres driver adapter. */
+/** Prisma client for a BackOffice Gym database, on the node-postgres driver adapter. */
 export function createDb(url: string): ShopDb {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
 }
@@ -648,10 +648,10 @@ export function createDb(url: string): ShopDb {
 const user = (): string => process.env.USER ?? 'postgres';
 
 export const devDatabaseUrl = (): string =>
-  process.env.SHOPGYM_DATABASE_URL ?? `postgresql://${user()}@localhost:5432/shopgym_dev`;
+  process.env.BACKOFFICE_GYM_DATABASE_URL ?? `postgresql://${user()}@localhost:5432/backoffice_gym_dev`;
 
 export const testDatabaseUrl = (): string =>
-  process.env.SHOPGYM_TEST_DATABASE_URL ?? `postgresql://${user()}@localhost:5432/shopgym_test`;
+  process.env.BACKOFFICE_GYM_TEST_DATABASE_URL ?? `postgresql://${user()}@localhost:5432/backoffice_gym_test`;
 ```
 
 `packages/db/src/json.ts`:
@@ -700,7 +700,7 @@ async function newEpisode(): Promise<string> {
   return id;
 }
 
-describe('shopgym schema', () => {
+describe('backoffice-gym schema', () => {
   it('keeps the same ids apart in different episodes', async () => {
     const a = await newEpisode();
     const b = await newEpisode();
@@ -756,7 +756,7 @@ Expected: exits 0.
 
 ```bash
 git add package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json vitest.config.ts vitest.global-setup.ts .gitignore packages/db
-git commit -m "feat(db): Prisma 7 schema for the shopgym store with per-episode composite keys
+git commit -m "feat(db): Prisma 7 schema for the backoffice-gym store with per-episode composite keys
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```
@@ -893,7 +893,7 @@ export async function dumpEpisode(db: Queryable, episodeId: string): Promise<Dum
   const dump = emptyDump();
   for (const table of TABLES) {
     const rows = await db.$queryRawUnsafe<Row[]>(
-      `SELECT * FROM "shopgym"."${table}" WHERE episode_id = $1::uuid ORDER BY id`,
+      `SELECT * FROM "backoffice_gym"."${table}" WHERE episode_id = $1::uuid ORDER BY id`,
       episodeId,
     );
     dump[table] = rows.map((row) => {
@@ -987,7 +987,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `packages/core/package.json`:
 ```json
 {
-  "name": "@shopgym/core",
+  "name": "@backoffice-gym/core",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -996,7 +996,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
   "scripts": { "typecheck": "tsc --noEmit -p tsconfig.json" },
   "dependencies": {
     "@faker-js/faker": "10.6.0",
-    "@shopgym/db": "workspace:*",
+    "@backoffice-gym/db": "workspace:*",
     "zod": "4.6.7"
   }
 }
@@ -1005,7 +1005,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 ```json
 { "extends": "../../tsconfig.base.json", "include": ["src"] }
 ```
-Run: `pnpm install`. Expected: it links `@shopgym/db` into core.
+Run: `pnpm install`. Expected: it links `@backoffice-gym/db` into core.
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -1284,7 +1284,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Test: `packages/core/src/store/generate.test.ts`, `packages/core/src/store/insert.test.ts`
 
 **Interfaces:**
-- Consumes: Task 3 utilities, and `Tx`, `toJson` and `stableStringify` from `@shopgym/db`.
+- Consumes: Task 3 utilities, and `Tx`, `toJson` and `stableStringify` from `@backoffice-gym/db`.
 - Produces:
   - row types `CustomerRow` … `PolicyRow`, `StoreRows` (keys equal the table names), `ORDER_STATUSES`, `OrderStatus`;
   - `CATALOG`, `POLICY_TEXT`, `POLICY_RULES`, `type PolicyRules`;
@@ -1400,7 +1400,7 @@ All times are India Standard Time (IST). "Today" is the store date in your instr
 
 `packages/core/src/store/generate.test.ts`:
 ```ts
-import { stableStringify } from '@shopgym/db';
+import { stableStringify } from '@backoffice-gym/db';
 import { describe, expect, it } from 'vitest';
 import { isoDate } from '../util/time';
 import { generateBaseStore } from './generate';
@@ -1663,7 +1663,7 @@ Expected: PASS, 4 tests.
 `packages/core/src/test/db.ts`:
 ```ts
 import { randomUUID } from 'node:crypto';
-import { createDb, testDatabaseUrl, type ShopDb } from '@shopgym/db';
+import { createDb, testDatabaseUrl, type ShopDb } from '@backoffice-gym/db';
 import { insertRows } from '../store/insert';
 import type { StoreRows } from '../store/types';
 
@@ -1687,7 +1687,7 @@ export async function seedEpisode(db: ShopDb, rows: StoreRows, storeDate: Date):
 
 `packages/core/src/store/insert.test.ts`:
 ```ts
-import { dumpEpisode, TABLES } from '@shopgym/db';
+import { dumpEpisode, TABLES } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { seedEpisode, testDb } from '../test/db';
 import { generateBaseStore } from './generate';
@@ -1718,7 +1718,7 @@ Expected: FAIL. `../store/insert` doesn't exist yet.
 
 `packages/core/src/store/insert.ts`:
 ```ts
-import { toJson, type Tx } from '@shopgym/db';
+import { toJson, type Tx } from '@backoffice-gym/db';
 import type { StoreRows } from './types';
 
 /** Inserts a store's rows for one episode, in foreign-key order, inside the caller's transaction. */
@@ -1766,7 +1766,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Test: `packages/core/src/tools/read.test.ts`
 
 **Interfaces:**
-- Consumes: `Tx` and `TableName` from `@shopgym/db`; `ToolError`, the time and money helpers, `ORDER_STATUSES`, `generateBaseStore`, and `seedEpisode`.
+- Consumes: `Tx` and `TableName` from `@backoffice-gym/db`; `ToolError`, the time and money helpers, `ORDER_STATUSES`, `generateBaseStore`, and `seedEpisode`.
 - Produces:
   - `interface ToolContext { tx: Tx; episodeId: string; step: number; storeDate: Date }`;
   - `interface ToolDef<S> { name; description; kind: 'read'|'act'|'end'; input: S; run(ctx, args) }` and `defineTool(def)`;
@@ -1872,7 +1872,7 @@ Expected: FAIL. `../test/tools` and `./index` don't exist yet.
 
 `packages/core/src/tools/types.ts`:
 ```ts
-import type { Tx } from '@shopgym/db';
+import type { Tx } from '@backoffice-gym/db';
 import type { z } from 'zod';
 
 export interface ToolContext {
@@ -1903,12 +1903,12 @@ export const defineTool = <S extends z.ZodType>(def: ToolDef<S>): ToolDef<S> => 
 
 `packages/core/src/tools/ids.ts`:
 ```ts
-import type { TableName, Tx } from '@shopgym/db';
+import type { TableName, Tx } from '@backoffice-gym/db';
 
 /** MAX(id) + 1 within the episode. Steps are serialized by the episode lock, so this is race-free. */
 export async function nextRowId(tx: Tx, table: TableName, episodeId: string): Promise<number> {
   const rows = await tx.$queryRawUnsafe<Array<{ id: number }>>(
-    `SELECT COALESCE(MAX(id), 0) + 1 AS id FROM "shopgym"."${table}" WHERE episode_id = $1::uuid`,
+    `SELECT COALESCE(MAX(id), 0) + 1 AS id FROM "backoffice_gym"."${table}" WHERE episode_id = $1::uuid`,
     episodeId,
   );
   return Number(rows[0]?.id ?? 1);
@@ -2136,7 +2136,7 @@ export type { ToolContext, ToolDef, ToolSchema } from './types';
 
 `packages/core/src/test/tools.ts`:
 ```ts
-import type { ShopDb } from '@shopgym/db';
+import type { ShopDb } from '@backoffice-gym/db';
 import { getTool } from '../tools/index';
 
 /** Runs one tool directly in a transaction (bypasses the lifecycle). Throws the tool's errors. */
@@ -2516,7 +2516,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 - Test: `packages/core/src/scoring/score.test.ts`
 
 **Interfaces:**
-- Consumes: `Dump`, `DiffEntry`, `Row`, `TableName` and `emptyDump` from `@shopgym/db`; `POLICY_RULES`, `formatMoney`, `humanDay` and `isoDate`.
+- Consumes: `Dump`, `DiffEntry`, `Row`, `TableName` and `emptyDump` from `@backoffice-gym/db`; `POLICY_RULES`, `formatMoney`, `humanDay` and `isoDate`.
 - Produces:
   - `TaskInstance<E>`, `CheckContext<E>`, `CheckDef<E>`, `CheckResult`, `ScoreResult`, `AllowRule`, `TaskTemplate<E>`, `AnyTask`;
   - check helpers `num`, `str`, `added`, `agentReplies`, `mentionsNumber`, `WINDOW_RE`, `allow`, `replyRules`, `daysBetweenIso`, `pass`, `fail`, `replySent<E>()`, `replyMentionsOrder<E>()`, `replyCitesWindow<E>()`, `noneAdded<E>(id, table, description)`;
@@ -2527,7 +2527,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 `packages/core/src/scoring/score.test.ts`:
 ```ts
-import { diffDumps, emptyDump, type Dump } from '@shopgym/db';
+import { diffDumps, emptyDump, type Dump } from '@backoffice-gym/db';
 import { describe, expect, it } from 'vitest';
 import { allow, fail, pass } from '../tasks/checks';
 import type { TaskTemplate } from '../tasks/types';
@@ -2630,7 +2630,7 @@ Expected: FAIL. The modules don't exist yet.
 
 `packages/core/src/tasks/types.ts`:
 ```ts
-import type { DiffEntry, Dump, Row, TableName } from '@shopgym/db';
+import type { DiffEntry, Dump, Row, TableName } from '@backoffice-gym/db';
 import type { StoreRows } from '../store/types';
 
 export interface TaskInstance<E> {
@@ -2697,7 +2697,7 @@ export type AnyTask = TaskTemplate<any>;
 
 `packages/core/src/tasks/checks.ts`:
 ```ts
-import type { DiffEntry, Row, TableName } from '@shopgym/db';
+import type { DiffEntry, Row, TableName } from '@backoffice-gym/db';
 import type { AllowRule, CheckDef } from './types';
 
 export const num = (row: Row | null | undefined, key: string): number => Number(row?.[key]);
@@ -2785,7 +2785,7 @@ export const getTask = (slug: string): AnyTask | undefined => TASKS.find((t) => 
 
 `packages/core/src/scoring/score.ts`:
 ```ts
-import type { DiffEntry, Dump, Row } from '@shopgym/db';
+import type { DiffEntry, Dump, Row } from '@backoffice-gym/db';
 import { POLICY_RULES } from '../store/policy';
 import { added, daysBetweenIso, num } from '../tasks/checks';
 import type { AllowRule, CheckContext, CheckResult, ScoreResult, TaskTemplate } from '../tasks/types';
@@ -2888,7 +2888,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 `packages/core/src/test/env.ts`:
 ```ts
-import type { ShopDb } from '@shopgym/db';
+import type { ShopDb } from '@backoffice-gym/db';
 import type { Env, StepResult } from '../episode/env';
 import type { TaskTemplate } from '../tasks/types';
 
@@ -2915,7 +2915,7 @@ export async function play(env: Env, episodeId: string, calls: Array<[string, un
 
 `packages/core/src/episode/env.test.ts`:
 ```ts
-import { createDb, dumpEpisode, hashDump } from '@shopgym/db';
+import { createDb, dumpEpisode, hashDump } from '@backoffice-gym/db';
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import { EnvError, InfraError } from '../errors';
@@ -3055,7 +3055,7 @@ Expected: FAIL. `./env` doesn't exist yet.
 `packages/core/src/episode/env.ts`:
 ```ts
 import { createHash, randomUUID } from 'node:crypto';
-import { diffDumps, dumpEpisode, hashDump, stableStringify, toJson, type Dump, type ShopDb, type Tx } from '@shopgym/db';
+import { diffDumps, dumpEpisode, hashDump, stableStringify, toJson, type Dump, type ShopDb, type Tx } from '@backoffice-gym/db';
 import { z } from 'zod';
 import { constraintMessage, EnvError, InfraError, ToolError } from '../errors';
 import { scoreTask } from '../scoring/score';
@@ -3133,7 +3133,7 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
   }
 
   async function lockEpisode(tx: Tx, id: string) {
-    const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>('SELECT id FROM "shopgym"."episodes" WHERE id = $1::uuid FOR UPDATE', id);
+    const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>('SELECT id FROM "backoffice_gym"."episodes" WHERE id = $1::uuid FOR UPDATE', id);
     if (rows.length === 0) throw new EnvError('not_found', `episode ${id} not found`);
     return tx.episode.findUniqueOrThrow({ where: { id }, select: { status: true, expires_at: true, store_date: true, score: true } });
   }
@@ -3143,7 +3143,7 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
   async function expireEpisodes(limit = 100): Promise<number> {
     return infra(() =>
       db.$executeRawUnsafe(
-        'DELETE FROM "shopgym"."episodes" WHERE id IN (SELECT id FROM "shopgym"."episodes" WHERE expires_at < $1 ORDER BY expires_at LIMIT $2)',
+        'DELETE FROM "backoffice_gym"."episodes" WHERE id IN (SELECT id FROM "backoffice_gym"."episodes" WHERE expires_at < $1 ORDER BY expires_at LIMIT $2)',
         now(),
         limit,
       ),
@@ -4243,7 +4243,7 @@ Expected: FAIL.
 
 `packages/core/src/tasks/templates/callback.ts`:
 ```ts
-import type { Row } from '@shopgym/db';
+import type { Row } from '@backoffice-gym/db';
 import { addEvent, addThread } from '../../store/build';
 import { generateBaseStore } from '../../store/generate';
 import { POLICY_RULES } from '../../store/policy';
@@ -4437,7 +4437,7 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 `packages/core/src/determinism.test.ts`:
 ```ts
 import { createHash } from 'node:crypto';
-import { stableStringify } from '@shopgym/db';
+import { stableStringify } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createEnv, ENV_VERSION } from './episode/env';
 import { TASKS } from './tasks/registry';
@@ -4506,11 +4506,11 @@ Expected: PASS, with "1 snapshot passed" and no snapshot written.
 
 `README.md`:
 ````markdown
-# ShopGym
+# BackOffice Gym
 
 An RL environment where AI agents run the operations desk of **Juniper Goods**, a fictional online home-goods store. Each episode is generated from a task and a seed; the agent works through 16 tools; a scorer computes the reward from the **final database state** with SQL checks, not an LLM judge.
 
-Status: **M1, environment core** (this package). The MCP server, HTTP RL API, Python client and demo site come in later milestones; see [`docs/superpowers/specs/2026-10-22-shopgym-design.md`](docs/superpowers/specs/2026-10-22-shopgym-design.md).
+Status: **M1, environment core** (this package). The MCP server, HTTP RL API, Python client and demo site come in later milestones; see [`docs/superpowers/specs/2026-10-22-backoffice-gym-design.md`](docs/superpowers/specs/2026-10-22-backoffice-gym-design.md).
 
 ## Tasks
 
@@ -4533,16 +4533,16 @@ Requires Node ≥ 20.19, pnpm 10 and PostgreSQL 17 on `localhost:5432` (Homebrew
 
 ```bash
 pnpm install
-createdb shopgym_dev && createdb shopgym_test
-pnpm --filter @shopgym/db exec prisma migrate deploy   # dev database
-pnpm test                                              # generates the client, migrates shopgym_test, runs everything
+createdb backoffice_gym_dev && createdb backoffice_gym_test
+pnpm --filter @backoffice-gym/db exec prisma migrate deploy   # dev database
+pnpm test                                              # generates the client, migrates backoffice_gym_test, runs everything
 ```
 
-Override the databases with `SHOPGYM_DATABASE_URL` / `SHOPGYM_TEST_DATABASE_URL`.
+Override the databases with `BACKOFFICE_GYM_DATABASE_URL` / `BACKOFFICE_GYM_TEST_DATABASE_URL`.
 
 ```ts
-import { createDb, devDatabaseUrl } from '@shopgym/db';
-import { createEnv } from '@shopgym/core';
+import { createDb, devDatabaseUrl } from '@backoffice-gym/db';
+import { createEnv } from '@backoffice-gym/core';
 
 const env = createEnv(createDb(devDatabaseUrl()));
 const { episode_id, task } = await env.reset({ task: 'refund-window-trap', seed: 7 });

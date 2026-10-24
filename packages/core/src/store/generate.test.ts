@@ -1,4 +1,4 @@
-import { stableStringify } from '@shopgym/db';
+import { stableStringify } from '@backoffice-gym/db';
 import { describe, expect, it } from 'vitest';
 import { isoDate } from '../util/time';
 import { generateBaseStore } from './generate';

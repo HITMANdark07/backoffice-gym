@@ -1,4 +1,4 @@
-import { diffDumps, emptyDump, type Dump } from '@shopgym/db';
+import { diffDumps, emptyDump, type Dump } from '@backoffice-gym/db';
 import { describe, expect, it } from 'vitest';
 import { allow, fail, pass } from '../tasks/checks';
 import type { TaskTemplate } from '../tasks/types';

@@ -1,11 +1,11 @@
-import { TASKS } from '@shopgym/core';
+import { TASKS } from '@backoffice-gym/core';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
 import { buildSuiteYaml, FREE_MODELS, taskId } from './suite';
 
 type Parsed = {
   suite: string;
-  servers: { shopgym: { command: string; args: string[]; hidden_tools: string[] } };
+  servers: { 'backoffice-gym': { command: string; args: string[]; hidden_tools: string[] } };
   models: Array<{ id: string; provider?: string } | string>;
   tasks: Array<{ id: string; prompt: string; vars: Record<string, string>; graders: unknown[] }>;
 };
@@ -13,15 +13,15 @@ type Parsed = {
 describe('buildSuiteYaml', () => {
   it('writes one task per template and seed, with literal prompts and vars', () => {
     const doc = parse(buildSuiteYaml({ models: FREE_MODELS, seeds: [1, 2, 3] })) as Parsed;
-    expect(doc.suite).toBe('shopgym');
+    expect(doc.suite).toBe('backoffice-gym');
     expect(doc.tasks).toHaveLength(TASKS.length * 3);
     const first = doc.tasks[0]!;
     expect(first.id).toBe(taskId('damaged-item', 1));
     expect(first.prompt).toBe(TASKS[0]!.generate(1).prompt);
     expect(first.vars).toEqual({ task: 'damaged-item', seed: '1' });
     expect(first.graders).toEqual([{ type: 'env_reward', tool: '__score', min: 1 }]);
-    expect(doc.servers.shopgym).toMatchObject({ command: 'node', hidden_tools: ['__score'] });
-    expect(doc.servers.shopgym.args).toEqual(['{suite_dir}/../packages/mcp/bin/shopgym-mcp.mjs', '--task', '{task}', '--seed', '{seed}']);
+    expect(doc.servers['backoffice-gym']).toMatchObject({ command: 'node', hidden_tools: ['__score'] });
+    expect(doc.servers['backoffice-gym'].args).toEqual(['{suite_dir}/../packages/mcp/bin/backoffice-gym-mcp.mjs', '--task', '{task}', '--seed', '{seed}']);
   });
 
   it('keeps every prompt exact through YAML, even with quotes, colons, # and non-ASCII text', () => {
@@ -35,9 +35,9 @@ describe('buildSuiteYaml', () => {
   });
 
   it('filters slugs and supports plain mock model ids', () => {
-    const doc = parse(buildSuiteYaml({ models: [{ id: 'mock/perfect' }], seeds: [1], slugs: ['callback'], name: 'shopgym-offline', serverPath: '{suite_dir}/../../packages/mcp/bin/shopgym-mcp.mjs' })) as Parsed;
-    expect(doc).toMatchObject({ suite: 'shopgym-offline', models: ['mock/perfect'] });
+    const doc = parse(buildSuiteYaml({ models: [{ id: 'mock/perfect' }], seeds: [1], slugs: ['callback'], name: 'backoffice-gym-offline', serverPath: '{suite_dir}/../../packages/mcp/bin/backoffice-gym-mcp.mjs' })) as Parsed;
+    expect(doc).toMatchObject({ suite: 'backoffice-gym-offline', models: ['mock/perfect'] });
     expect(doc.tasks.map((t) => t.id)).toEqual(['callback--s1']);
-    expect(doc.servers.shopgym.args[0]).toBe('{suite_dir}/../../packages/mcp/bin/shopgym-mcp.mjs');
+    expect(doc.servers['backoffice-gym'].args[0]).toBe('{suite_dir}/../../packages/mcp/bin/backoffice-gym-mcp.mjs');
   });
 });

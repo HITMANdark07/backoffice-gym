@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { diffDumps, dumpEpisode, hashDump, stableStringify, toJson, type Dump, type ShopDb, type Tx } from '@shopgym/db';
+import { diffDumps, dumpEpisode, hashDump, stableStringify, toJson, type Dump, type ShopDb, type Tx } from '@backoffice-gym/db';
 import { z } from 'zod';
 import { constraintMessage, EnvError, InfraError, ToolError } from '../errors';
 import { scoreTask } from '../scoring/score';
@@ -77,7 +77,7 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
   }
 
   async function lockEpisode(tx: Tx, id: string) {
-    const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>('SELECT id FROM "shopgym"."episodes" WHERE id = $1::uuid FOR UPDATE', id);
+    const rows = await tx.$queryRawUnsafe<Array<{ id: string }>>('SELECT id FROM "backoffice_gym"."episodes" WHERE id = $1::uuid FOR UPDATE', id);
     if (rows.length === 0) throw new EnvError('not_found', `episode ${id} not found`);
     return tx.episode.findUniqueOrThrow({ where: { id } });
   }
@@ -109,7 +109,7 @@ export function createEnv(db: ShopDb, options: EnvOptions = {}): Env {
   async function expireEpisodes(limit = 100): Promise<number> {
     return infra(() =>
       db.$executeRawUnsafe(
-        'DELETE FROM "shopgym"."episodes" WHERE id IN (SELECT id FROM "shopgym"."episodes" WHERE expires_at < $1 ORDER BY expires_at LIMIT $2)',
+        'DELETE FROM "backoffice_gym"."episodes" WHERE id IN (SELECT id FROM "backoffice_gym"."episodes" WHERE expires_at < $1 ORDER BY expires_at LIMIT $2)',
         now(),
         limit,
       ),

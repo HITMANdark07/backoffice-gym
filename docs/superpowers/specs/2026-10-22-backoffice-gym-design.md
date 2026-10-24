@@ -1,10 +1,10 @@
-# ShopGym — design spec
+# BackOffice Gym — design spec
 
 Date: 2026-10-22 · Author: Shekhar Kumar · Status: draft for review
 
 ## 1. Summary
 
-ShopGym is an open-source reinforcement-learning environment in which AI agents run the operations desk of a fictional online store, **Juniper Goods**. Each episode is generated from a seed and a task template. The agent works through tools (read the policy, open support threads, refund, replace, restock, schedule), and a scorer computes a reward from the **final database state** with SQL checks, not with an LLM judge.
+BackOffice Gym is an open-source reinforcement-learning environment in which AI agents run the operations desk of a fictional online store, **Juniper Goods**. Each episode is generated from a seed and a task template. The agent works through tools (read the policy, open support threads, refund, replace, restock, schedule), and a scorer computes a reward from the **final database state** with SQL checks, not with an LLM judge.
 
 It ships as:
 
@@ -20,7 +20,7 @@ It ships as:
 
 ### Positioning
 
-τ-bench already covers retail and airline customer support. ShopGym does not claim to be first. Its differences:
+τ-bench already covers retail and airline customer support. BackOffice Gym does not claim to be first. Its differences:
 
 - a real RL interface with seeds and procedurally generated variants;
 - rewards computed only from database state;
@@ -31,13 +31,13 @@ It ships as:
 ## 2. Global constraints
 
 - **Language and runtime:** TypeScript on Node 20 (≥ 20.19), ESM. pnpm workspaces, tsup, Vitest and zod, matching mcp-evals.
-- **Database, local:** PostgreSQL 17 from Homebrew, already running on `localhost:5432`. **No Docker.** Use the dedicated databases `shopgym_dev` and `shopgym_test`, and never touch other databases on the server.
+- **Database, local:** PostgreSQL 17 from Homebrew, already running on `localhost:5432`. **No Docker.** Use the dedicated databases `backoffice_gym_dev` and `backoffice_gym_test`, and never touch other databases on the server.
 - **Database, cloud:** Supabase Postgres.
   - Runtime traffic goes through the transaction pooler: port 6543, `?pgbouncer=true`.
   - Migrations use the direct connection on port 5432.
 - **ORM:** Prisma 7, the latest 7.x stable at implementation time (7.10.1 on 2026-10-22), with `@prisma/adapter-pg`. Do not use Prisma 8 while it is a release candidate.
   - `schema.prisma` is the single source of truth.
-  - Every app table lives in the Postgres schema `shopgym`, which is never in Supabase's exposed API schemas.
+  - Every app table lives in the Postgres schema `backoffice_gym`, which is never in Supabase's exposed API schemas.
 - **Web:** Next.js 16 (App Router), React, Tailwind CSS and Framer Motion, deployed to Vercel. The HTTP API is a Hono app mounted at `/api/[...route]`. It also runs standalone locally.
 - **Agent interface:** the official MCP TypeScript SDK, over stdio.
 - **Fake data:** `@faker-js/faker`, pinned to an exact version and always seeded.
@@ -56,7 +56,7 @@ It ships as:
 
 ## 3. The store (world model)
 
-All tables are in schema `shopgym`. Every environment table has an `episode_id` column and a composite primary key `(episode_id, id)`, so many episodes can live in one database.
+All tables are in schema `backoffice_gym`. Every environment table has an `episode_id` column and a composite primary key `(episode_id, id)`, so many episodes can live in one database.
 
 | Table | Key columns |
 |---|---|
@@ -172,14 +172,14 @@ The before/after comparison is a canonical dump of every environment table for t
 ## 6. Architecture
 
 ```
-shopgym/
+backoffice-gym/
   packages/db        schema.prisma, migrations, createDb(url) → PrismaClient(adapter-pg), canonical dump + hash
   packages/core      generator, tools, tasks, scorer, episode lifecycle (reset · step · score · expire)
   packages/mcp       MCP stdio server over core
   packages/api       Hono app: RL API + live-run endpoints; standalone `pnpm api` locally
   packages/providers OpenAI-compatible chat client with presets (openai · openrouter · gemini), key redaction
   packages/replay    converts mcp-evals traces into replay JSON by deterministic re-execution
-  clients/python     ShopGym Python client (httpx), Gymnasium-style reset/step
+  clients/python     BackOffice Gym Python client (httpx), Gymnasium-style reset/step
   apps/web           Next.js 16 site; mounts packages/api at /api/[...route]
 ```
 
@@ -201,7 +201,7 @@ shopgym/
 
 ### MCP server
 
-- Configured by environment variables: `SHOPGYM_DATABASE_URL`, `SHOPGYM_TASK`, `SHOPGYM_SEED`.
+- Configured by environment variables: `BACKOFFICE_GYM_DATABASE_URL`, `BACKOFFICE_GYM_TASK`, `BACKOFFICE_GYM_SEED`.
 - On connect it resets an episode, sends the task prompt as the server's instructions, and exposes the 16 tools.
 - It also exposes `__score`, which returns the score JSON, for the harness only. mcp-evals hides it from the agent (see §8).
 - Each MCP session gets its own episode.
@@ -222,10 +222,10 @@ shopgym/
 
 ### Python client
 
-`clients/python/shopgym` is about 100 lines and needs Python ≥ 3.10 and `httpx`.
+`clients/python/backoffice_gym` is about 100 lines and needs Python ≥ 3.10 and `httpx`.
 
 ```python
-env = ShopGym("http://localhost:8787")
+env = BackOfficeGym("http://localhost:8787")
 obs = env.reset(task="refund-window-trap", seed=7)
 obs, done = env.step("read_policy", {})
 result = env.score()
@@ -240,7 +240,7 @@ It ships with a short README example of a scripted policy loop. It does not depe
 - **Supabase Auth** with GitHub OAuth and email magic links, through `@supabase/ssr` in Next.js.
 - The server checks the user on every request with `supabase.auth.getUser()`.
 - Prisma connects with a privileged role, so **every query on user data filters by `user_id` in code**.
-- Row-level security is enabled on every `shopgym` table with no policies (deny all), as a backstop, and the schema is not exposed through Supabase's Data API.
+- Row-level security is enabled on every `backoffice-gym` table with no policies (deny all), as a backstop, and the schema is not exposed through Supabase's Data API.
 
 ### Provider keys
 
@@ -282,7 +282,7 @@ It ships with a short README example of a scripted policy loop. It does not depe
 
 ## 8. Recording verified runs with mcp-evals
 
-- **A new suite `suites/shopgym.yaml`** in the mcp-evals repo runs the ShopGym MCP server with one task per template × 3 seeds. Models are free OpenRouter models or Ollama by default; paid models only with approval.
+- **A new suite `suites/backoffice-gym.yaml`** in the mcp-evals repo runs the BackOffice Gym MCP server with one task per template × 3 seeds. Models are free OpenRouter models or Ollama by default; paid models only with approval.
 - **An addition to mcp-evals:**
   - A suite option `hidden_tools: [__score]`: the harness removes these tools from the list it sends the model.
   - A new grader, `{ type: env_reward, tool: __score, min: 1.0 }`: after the agent loop ends, the harness calls the hidden tool on the same server session, reads `reward`, records it in results, and passes when `reward >= min`.
@@ -363,13 +363,13 @@ All pages are rendered on the server, with per-page metadata and Open Graph imag
 
 - **Supabase:** Postgres and Auth, on the free tier.
   - Migrations run from CI or by hand over the direct connection.
-  - The `shopgym` schema stays out of the Data API.
+  - The `backoffice-gym` schema stays out of the Data API.
   - A daily GitHub Actions call to `/api/health` keeps the project awake and runs cleanup.
 - **Vercel:** `apps/web`, including the API, on the free tier.
   - Environment variables: `DATABASE_URL` (pooler), `DIRECT_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `KEY_ENCRYPTION_KEYS` and `INTERNAL_STEP_SECRET`.
-- **Repositories:** a new public GitHub repo `shopgym`, and the mcp-evals change as a PR to the existing repo.
+- **Repositories:** a new public GitHub repo `backoffice-gym`, and the mcp-evals change as a PR to the existing repo.
 - **Before publishing:** check that the GitHub and npm names are free.
-- **Portfolio:** a ShopGym case study with the player embedded, added after verified runs exist.
+- **Portfolio:** a BackOffice Gym case study with the player embedded, added after verified runs exist.
 
 ## 13. Milestones
 

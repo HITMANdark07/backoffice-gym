@@ -44,7 +44,7 @@ export async function dumpEpisode(db: Queryable, episodeId: string): Promise<Dum
   const dump = emptyDump();
   for (const table of TABLES) {
     const rows = await db.$queryRawUnsafe<Row[]>(
-      `SELECT * FROM "shopgym"."${table}" WHERE episode_id = $1::uuid ORDER BY id`,
+      `SELECT * FROM "backoffice_gym"."${table}" WHERE episode_id = $1::uuid ORDER BY id`,
       episodeId,
     );
     dump[table] = rows.map((row) => {

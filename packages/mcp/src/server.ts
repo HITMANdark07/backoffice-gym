@@ -1,11 +1,11 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ErrorCode, ListToolsRequestSchema, McpError } from '@modelcontextprotocol/sdk/types.js';
-import { ENV_VERSION, getTool, InfraError, toolSchemas, type Env } from '@shopgym/core';
+import { ENV_VERSION, getTool, InfraError, toolSchemas, type Env } from '@backoffice-gym/core';
 
 /** Harness-only tool returning the episode score. mcp-evals hides it from agents (server `hidden_tools`). */
 export const SCORE_TOOL = '__score';
 
-export interface ShopGymServerOptions {
+export interface BackOfficeGymServerOptions {
   env: Env;
   task: string;
   seed: number;
@@ -13,7 +13,7 @@ export interface ShopGymServerOptions {
   onInfraError?: (e: InfraError) => void;
 }
 
-export interface ShopGymServer {
+export interface BackOfficeGymServer {
   server: Server;
   episodeId: string;
   prompt: string;
@@ -25,10 +25,10 @@ const text = (t: string, isError = false) => ({ content: [{ type: 'text' as cons
  * One MCP session = one episode. The low-level Server is used on purpose: arguments go to the environment unvalidated,
  * so invalid arguments are the environment's tool errors and count as steps, exactly as over the RL API.
  */
-export async function createShopGymServer(o: ShopGymServerOptions): Promise<ShopGymServer> {
+export async function createBackOfficeGymServer(o: BackOfficeGymServerOptions): Promise<BackOfficeGymServer> {
   const reset = await o.env.reset({ task: o.task, seed: o.seed });
   const episodeId = reset.episode_id;
-  const server = new Server({ name: 'shopgym', version: `env-${ENV_VERSION}` }, { capabilities: { tools: {} }, instructions: reset.task.prompt });
+  const server = new Server({ name: 'backoffice-gym', version: `env-${ENV_VERSION}` }, { capabilities: { tools: {} }, instructions: reset.task.prompt });
   const tools = [
     ...toolSchemas().map((t) => ({ name: t.name, description: t.description, inputSchema: t.input_schema as { type: 'object'; [k: string]: unknown } })),
     {

@@ -1,5 +1,5 @@
-import { ENV_VERSION, type Env, type ScoreResult } from '@shopgym/core';
-import { diffDumps, dumpEpisode, type DiffEntry, type ShopDb } from '@shopgym/db';
+import { ENV_VERSION, type Env, type ScoreResult } from '@backoffice-gym/core';
+import { diffDumps, dumpEpisode, type DiffEntry, type ShopDb } from '@backoffice-gym/db';
 
 /** The subset of an mcp-evals trace line that replays need. */
 export interface TraceLike {

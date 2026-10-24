@@ -1,15 +1,15 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { createEnv } from '@shopgym/core';
-import { createDb, devDatabaseUrl } from '@shopgym/db';
+import { createEnv } from '@backoffice-gym/core';
+import { createDb, devDatabaseUrl } from '@backoffice-gym/db';
 import { parseArgs, USAGE, UsageError, type CliArgs } from './args';
-import { createShopGymServer } from './server';
+import { createBackOfficeGymServer } from './server';
 
 const fail = (message: string, code: number): never => {
-  process.stderr.write(`shopgym-mcp: ${message}\n`);
+  process.stderr.write(`backoffice-gym-mcp: ${message}\n`);
   process.exit(code);
 };
 
-/** Entry for bin/shopgym-mcp.mjs. Never writes to stdout: stdout is the MCP channel. */
+/** Entry for bin/backoffice-gym-mcp.mjs. Never writes to stdout: stdout is the MCP channel. */
 export async function run(argv: string[]): Promise<void> {
   let args: CliArgs;
   try {
@@ -19,7 +19,7 @@ export async function run(argv: string[]): Promise<void> {
   }
   const db = createDb(args.databaseUrl ?? devDatabaseUrl());
   try {
-    const { server } = await createShopGymServer({
+    const { server } = await createBackOfficeGymServer({
       env: createEnv(db),
       task: args.task,
       seed: args.seed,

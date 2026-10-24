@@ -1,5 +1,5 @@
 {
-  "name": "shopgym",
+  "name": "backoffice-gym",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -9,15 +9,15 @@
   },
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "db:generate": "pnpm --filter @shopgym/db generate",
-    "db:migrate:test": "pnpm --filter @shopgym/db migrate:test",
+    "db:generate": "pnpm --filter @backoffice-gym/db generate",
+    "db:migrate:test": "pnpm --filter @backoffice-gym/db migrate:test",
     "test": "pnpm db:generate && pnpm db:migrate:test && vitest run",
     "typecheck": "pnpm db:generate && pnpm -r typecheck",
-    "api": "pnpm --filter @shopgym/api start",
-    "replay": "pnpm --filter @shopgym/replay start"
+    "api": "pnpm --filter @backoffice-gym/api start",
+    "replay": "pnpm --filter @backoffice-gym/replay start"
   },
   "devDependencies": {
-    "@shopgym/db": "workspace:*",
+    "@backoffice-gym/db": "workspace:*",
     "@types/node": "^20.11.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"

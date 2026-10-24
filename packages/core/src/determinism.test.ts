@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { stableStringify } from '@shopgym/db';
+import { stableStringify } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createEnv, ENV_VERSION } from './episode/env';
 import { TASKS } from './tasks/registry';

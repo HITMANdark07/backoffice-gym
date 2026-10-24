@@ -1,16 +1,16 @@
-"""Runs against a live API (`pnpm api`) when SHOPGYM_API_URL is set; skipped otherwise."""
+"""Runs against a live API (`pnpm api`) when BACKOFFICE_GYM_API_URL is set; skipped otherwise."""
 import os
 
 import pytest
 
-from shopgym import ShopGym
+from backoffice_gym import BackOfficeGym
 
-URL = os.environ.get("SHOPGYM_API_URL")
+URL = os.environ.get("BACKOFFICE_GYM_API_URL")
 
 
-@pytest.mark.skipif(URL is None, reason="set SHOPGYM_API_URL to run against a live API")
+@pytest.mark.skipif(URL is None, reason="set BACKOFFICE_GYM_API_URL to run against a live API")
 def test_live_refund_window_trap():
-    with ShopGym(URL) as env:
+    with BackOfficeGym(URL) as env:
         env.reset("refund-window-trap", seed=1)
         inbox, _ = env.step("list_inbox")
         thread_id = inbox["result"]["threads"][0]["thread_id"]

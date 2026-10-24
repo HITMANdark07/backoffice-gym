@@ -2,8 +2,8 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gzipSync } from 'node:zlib';
-import { createEnv, TASKS } from '@shopgym/core';
-import { createDb, testDatabaseUrl } from '@shopgym/db';
+import { createEnv, TASKS } from '@backoffice-gym/core';
+import { createDb, testDatabaseUrl } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { parseTaskId, replayableCalls, replayTrace, ReplayMismatchError, type TraceLike } from './replay';
 import { readTraces } from './traces';
@@ -21,7 +21,7 @@ function trace(calls: Array<{ tool: string; args: unknown; answered?: boolean }>
     if (c.answered !== false) events.push({ type: 'tool_result', callId: `c${i}`, tool: c.tool });
   });
   return {
-    runKey: 'shopgym/shopgym/mock/perfect/refund-window-trap--s1#0', suite: 'shopgym', server: 'shopgym', model: 'mock/perfect',
+    runKey: 'backoffice-gym/backoffice-gym/mock/perfect/refund-window-trap--s1#0', suite: 'backoffice-gym', server: 'backoffice-gym', model: 'mock/perfect',
     task: 'refund-window-trap--s1', outcome: 'pass',
     graders: recorded === null ? [] : [{ type: 'env_reward', value: recorded }], events,
   };

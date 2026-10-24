@@ -1,4 +1,4 @@
-import { createDb, dumpEpisode, hashDump } from '@shopgym/db';
+import { createDb, dumpEpisode, hashDump } from '@backoffice-gym/db';
 import { randomUUID } from 'node:crypto';
 import { afterAll, describe, expect, it } from 'vitest';
 import { EnvError, InfraError } from '../errors';

@@ -1,4 +1,4 @@
-import type { ShopDb } from '@shopgym/db';
+import type { ShopDb } from '@backoffice-gym/db';
 import type { Env, StepResult } from '../episode/env';
 import type { TaskTemplate } from '../tasks/types';
 

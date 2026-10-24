@@ -1,4 +1,4 @@
-import { dumpEpisode, TABLES } from '@shopgym/db';
+import { dumpEpisode, TABLES } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { seedEpisode, testDb } from '../test/db';
 import { generateBaseStore } from './generate';

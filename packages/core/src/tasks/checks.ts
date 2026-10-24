@@ -1,4 +1,4 @@
-import type { DiffEntry, Row, TableName } from '@shopgym/db';
+import type { DiffEntry, Row, TableName } from '@backoffice-gym/db';
 import type { AllowRule, CheckDef } from './types';
 
 export const num = (row: Row | null | undefined, key: string): number => Number(row?.[key]);

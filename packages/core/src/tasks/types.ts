@@ -1,4 +1,4 @@
-import type { DiffEntry, Dump, Row, TableName } from '@shopgym/db';
+import type { DiffEntry, Dump, Row, TableName } from '@backoffice-gym/db';
 import type { StoreRows } from '../store/types';
 
 export interface TaskInstance<E> {

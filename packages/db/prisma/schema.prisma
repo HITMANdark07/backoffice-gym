@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["shopgym"]
+  schemas  = ["backoffice_gym"]
 }
 
 model Episode {
@@ -43,7 +43,7 @@ model Episode {
 
   @@index([expires_at])
   @@map("episodes")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Customer {
@@ -61,7 +61,7 @@ model Customer {
   @@id([episode_id, id])
   @@unique([episode_id, email])
   @@map("customers")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Product {
@@ -84,7 +84,7 @@ model Product {
   @@id([episode_id, id])
   @@unique([episode_id, sku])
   @@map("products")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Staff {
@@ -99,7 +99,7 @@ model Staff {
 
   @@id([episode_id, id])
   @@map("staff")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Order {
@@ -123,7 +123,7 @@ model Order {
 
   @@id([episode_id, id])
   @@map("orders")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model OrderItem {
@@ -140,7 +140,7 @@ model OrderItem {
 
   @@id([episode_id, id])
   @@map("order_items")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Payment {
@@ -157,7 +157,7 @@ model Payment {
 
   @@id([episode_id, id])
   @@map("payments")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Refund {
@@ -175,7 +175,7 @@ model Refund {
 
   @@id([episode_id, id])
   @@map("refunds")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Replacement {
@@ -192,7 +192,7 @@ model Replacement {
 
   @@id([episode_id, id])
   @@map("replacements")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model PurchaseOrder {
@@ -209,7 +209,7 @@ model PurchaseOrder {
 
   @@id([episode_id, id])
   @@map("purchase_orders")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Approval {
@@ -226,7 +226,7 @@ model Approval {
 
   @@id([episode_id, id])
   @@map("approvals")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Thread {
@@ -242,7 +242,7 @@ model Thread {
 
   @@id([episode_id, id])
   @@map("threads")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Message {
@@ -258,7 +258,7 @@ model Message {
 
   @@id([episode_id, id])
   @@map("messages")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model CalendarEvent {
@@ -276,7 +276,7 @@ model CalendarEvent {
 
   @@id([episode_id, id])
   @@map("calendar_events")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Budget {
@@ -290,7 +290,7 @@ model Budget {
 
   @@id([episode_id, id])
   @@map("budget")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model Policy {
@@ -303,7 +303,7 @@ model Policy {
 
   @@id([episode_id, id])
   @@map("policy")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model ActionLog {
@@ -319,7 +319,7 @@ model ActionLog {
 
   @@id([episode_id, id])
   @@map("action_log")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }
 
 model RateLimit {
@@ -331,5 +331,5 @@ model RateLimit {
   @@id([key, bucket, window_start])
   @@index([window_start])
   @@map("rate_limits")
-  @@schema("shopgym")
+  @@schema("backoffice_gym")
 }

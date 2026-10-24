@@ -1,5 +1,5 @@
-import { InfraError } from '@shopgym/core';
-import type { ShopDb } from '@shopgym/db';
+import { InfraError } from '@backoffice-gym/core';
+import type { ShopDb } from '@backoffice-gym/db';
 import type { LimitBucket, RateLimiter } from './app';
 
 export interface LimitRule {
@@ -13,7 +13,7 @@ export const DEFAULT_LIMITS: Record<LimitBucket, LimitRule> = {
   steps: { max: 600, windowMs: 3_600_000 },
 };
 
-/** Fixed-window counters in shopgym.rate_limits, one upsert per hit. */
+/** Fixed-window counters in backoffice_gym.rate_limits, one upsert per hit. */
 export function createPgRateLimiter(
   db: ShopDb,
   limits: Record<LimitBucket, LimitRule> = DEFAULT_LIMITS,
@@ -26,7 +26,7 @@ export function createPgRateLimiter(
       const start = new Date(Math.floor(t / rule.windowMs) * rule.windowMs);
       try {
         const rows = await db.$queryRawUnsafe<Array<{ count: number }>>(
-          `INSERT INTO "shopgym"."rate_limits" (key, bucket, window_start, count) VALUES ($1, $2, $3, 1)
+          `INSERT INTO "backoffice_gym"."rate_limits" (key, bucket, window_start, count) VALUES ($1, $2, $3, 1)
            ON CONFLICT (key, bucket, window_start) DO UPDATE SET count = "rate_limits".count + 1
            RETURNING count`,
           key,
@@ -40,7 +40,7 @@ export function createPgRateLimiter(
       }
     },
     async prune(olderThanMs = 86_400_000) {
-      return db.$executeRawUnsafe('DELETE FROM "shopgym"."rate_limits" WHERE window_start < $1', new Date(now().getTime() - olderThanMs));
+      return db.$executeRawUnsafe('DELETE FROM "backoffice_gym"."rate_limits" WHERE window_start < $1', new Date(now().getTime() - olderThanMs));
     },
   };
 }

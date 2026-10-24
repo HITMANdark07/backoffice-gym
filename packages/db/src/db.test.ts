@@ -22,7 +22,7 @@ async function newEpisode(): Promise<string> {
   return id;
 }
 
-describe('shopgym schema', () => {
+describe('backoffice-gym schema', () => {
   it('keeps the same ids apart in different episodes', async () => {
     const a = await newEpisode();
     const b = await newEpisode();

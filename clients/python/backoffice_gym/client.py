@@ -1,4 +1,4 @@
-"""HTTP client for the ShopGym RL API (spec §6)."""
+"""HTTP client for the BackOffice Gym RL API (spec §6)."""
 from __future__ import annotations
 
 from typing import Any
@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 
 
-class ShopGymError(Exception):
+class BackOfficeGymError(Exception):
     """The API answered with an error status."""
 
     def __init__(self, status: int, message: str, code: str | None = None) -> None:
@@ -16,7 +16,7 @@ class ShopGymError(Exception):
         self.code = code
 
 
-class ShopGym:
+class BackOfficeGym:
     """Gymnasium-style client: reset() a task, step() tools, score() the episode."""
 
     def __init__(self, base_url: str = "http://127.0.0.1:8787", *, timeout: float = 30.0, client: httpx.Client | None = None) -> None:
@@ -24,7 +24,7 @@ class ShopGym:
         self.episode_id: str | None = None
         self.done = False
 
-    def __enter__(self) -> ShopGym:
+    def __enter__(self) -> BackOfficeGym:
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -68,5 +68,5 @@ class ShopGym:
         except ValueError:
             body = {"error": response.text}
         if response.status_code >= 400:
-            raise ShopGymError(response.status_code, str(body.get("error", "request failed")), body.get("code"))
+            raise BackOfficeGymError(response.status_code, str(body.get("error", "request failed")), body.get("code"))
         return body

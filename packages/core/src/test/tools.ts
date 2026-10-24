@@ -1,4 +1,4 @@
-import type { ShopDb } from '@shopgym/db';
+import type { ShopDb } from '@backoffice-gym/db';
 import { getTool } from '../tools/index';
 
 /** Runs one tool directly in a transaction (bypasses the lifecycle). Throws the tool's errors. */

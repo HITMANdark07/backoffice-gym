@@ -1,4 +1,4 @@
-import type { Row } from '@shopgym/db';
+import type { Row } from '@backoffice-gym/db';
 import { addEvent, addThread } from '../../store/build';
 import { generateBaseStore } from '../../store/generate';
 import { POLICY_RULES } from '../../store/policy';

@@ -6,7 +6,7 @@ export default defineConfig({
   datasource: {
     url:
       process.env.DATABASE_URL ??
-      process.env.SHOPGYM_DATABASE_URL ??
-      `postgresql://${process.env.USER}@localhost:5432/shopgym_dev`,
+      process.env.BACKOFFICE_GYM_DATABASE_URL ??
+      `postgresql://${process.env.USER}@localhost:5432/backoffice_gym_dev`,
   },
 });

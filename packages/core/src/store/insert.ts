@@ -1,4 +1,4 @@
-import { toJson, type Tx } from '@shopgym/db';
+import { toJson, type Tx } from '@backoffice-gym/db';
 import type { StoreRows } from './types';
 
 /** Inserts a store's rows for one episode, in foreign-key order, inside the caller's transaction. */

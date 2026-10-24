@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { createEnv } from '@shopgym/core';
-import { createDb, testDatabaseUrl } from '@shopgym/db';
+import { createEnv } from '@backoffice-gym/core';
+import { createDb, testDatabaseUrl } from '@backoffice-gym/db';
 import { afterAll, describe, expect, it } from 'vitest';
 import { createApi } from './app';
 import { createPgRateLimiter } from './rate-limit';

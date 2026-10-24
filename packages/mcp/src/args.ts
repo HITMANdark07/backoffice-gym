@@ -8,7 +8,7 @@ export class UsageError extends Error {
   override name = 'UsageError';
 }
 
-export const USAGE = 'usage: shopgym-mcp --task <slug> --seed <int> [--database-url <url>]';
+export const USAGE = 'usage: backoffice-gym-mcp --task <slug> --seed <int> [--database-url <url>]';
 
 export function parseArgs(argv: string[]): CliArgs {
   const out: Partial<CliArgs> = {};

@@ -1,5 +1,5 @@
 {
-  "name": "@shopgym/api",
+  "name": "@backoffice-gym/api",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.5",
-    "@shopgym/core": "workspace:*",
-    "@shopgym/db": "workspace:*",
+    "@backoffice-gym/core": "workspace:*",
+    "@backoffice-gym/db": "workspace:*",
     "hono": "4.13.13",
     "tsx": "4.23.15"
   }

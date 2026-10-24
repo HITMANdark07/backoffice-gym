@@ -1,5 +1,5 @@
 {
-  "name": "@shopgym/replay",
+  "name": "@backoffice-gym/replay",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -10,8 +10,8 @@
     "start": "tsx src/main.ts"
   },
   "dependencies": {
-    "@shopgym/core": "workspace:*",
-    "@shopgym/db": "workspace:*",
+    "@backoffice-gym/core": "workspace:*",
+    "@backoffice-gym/db": "workspace:*",
     "tsx": "4.23.15"
   }
 }

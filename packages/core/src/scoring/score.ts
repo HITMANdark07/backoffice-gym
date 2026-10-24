@@ -1,4 +1,4 @@
-import type { DiffEntry, Dump, Row } from '@shopgym/db';
+import type { DiffEntry, Dump, Row } from '@backoffice-gym/db';
 import { POLICY_RULES } from '../store/policy';
 import { added, daysBetweenIso, num } from '../tasks/checks';
 import type { AllowRule, CheckContext, CheckResult, ScoreResult, TaskTemplate } from '../tasks/types';
