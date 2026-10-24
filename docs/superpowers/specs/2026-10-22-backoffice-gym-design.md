@@ -237,7 +237,7 @@ It ships with a short README example of a scripted policy loop. It does not depe
 
 ### Accounts
 
-- **Supabase Auth** with GitHub OAuth and email magic links, through `@supabase/ssr` in Next.js.
+- **Supabase Auth** with **Google sign-in only** (decided 2026-10-24), through `@supabase/ssr` in Next.js. Sign-in exists to tie saved API keys and run limits to a person; nothing about the person is ever shown publicly.
 - The server checks the user on every request with `supabase.auth.getUser()`.
 - Prisma connects with a privileged role, so **every query on user data filters by `user_id` in code**.
 - Row-level security is enabled on every `backoffice-gym` table with no policies (deny all), as a backstop, and the schema is not exposed through Supabase's Data API.
@@ -253,11 +253,11 @@ It ships with a short README example of a scripted policy loop. It does not depe
 - **The plaintext key** exists only in server memory for the length of one model call. It is never logged, returned, stored unencrypted or put in an error.
   - The client strips the `Authorization` header from anything it logs.
   - Provider error bodies are cleaned: any substring of 8 or more characters matching the key, and any `sk-…` or `AIza…`-style token, is masked.
-- **Delete** removes the row. **Delete account** removes keys, runs and episodes.
+- **Delete** removes the row. **Delete account** removes keys, runs and episodes. Users can also delete any of their own runs.
 
 ### Run execution, step by step (works within Vercel's limits, with no queue)
 
-- **Table `runs`:** id, user_id (nullable for verified runs), source (`verified` · `community` · `try`), task_slug, seed, episode_id, provider, model, status (`queued` · `running` · `done` · `failed` · `cancelled`), step_count, reward, breakdown (jsonb), prompt_tokens, completion_tokens, visibility (`private` · `public`), system_prompt_version, created_at, finished_at, error.
+- **Table `runs`:** id, user_id (nullable for verified runs), source (`verified` · `community` · `try`), task_slug, seed, episode_id, provider, model, status (`queued` · `running` · `done` · `failed` · `cancelled`), step_count, reward, breakdown (jsonb), prompt_tokens, completion_tokens, hidden (boolean, owner-only moderation), system_prompt_version, created_at, finished_at, error.
 - **Table `run_steps`:** run_id, n, assistant_text, tool, args, result, error, state_diff (jsonb), prompt_tokens, completion_tokens, latency_ms. The primary key `(run_id, n)` makes steps idempotent.
 - **`POST /api/runs`** (signed in) takes `{ task, seed?, key_id, model }`. It checks the limits, resets an episode, creates the run, and returns the run id.
 - **`POST /api/runs/:id/advance`** advances the run by exactly one step:
@@ -277,8 +277,9 @@ It ships with a short README example of a scripted policy loop. It does not depe
 
 ### Sharing and the leaderboard
 
-- Runs are private by default. "Share" sets `visibility = public` and gives `/runs/:id`.
-- The leaderboard shows **Verified** runs (ours, with pinned environment, system prompt and model) and **Community** runs (shared visitor runs, labelled) separately.
+- **Every run is public** at `/runs/:id` (decided 2026-10-24: no private/public toggle). A run contains only the fictional store, the model's actions and replies, the model, task, seed and reward. It never shows who made it: no name, email or avatar.
+- **Community runs stay separate from verified runs.** Verified runs (ours, pinned environment, system prompt and model) remain the only ones on the landing page and heatmap; visitor runs are listed on `/runs/community`, clearly labelled.
+- **Moderation:** the site owner can set `hidden` on any run (it then 404s and leaves listings). Users can delete their own runs.
 
 ## 8. Recording verified runs with mcp-evals
 
@@ -320,7 +321,7 @@ All pages are rendered on the server, with per-page metadata and Open Graph imag
 
 ### Look and feel
 
-- **Shared with the portfolio:** a light background with a cobalt accent, Instrument Serif for headings, Geist for text and JetBrains Mono for tool calls.
+- **Its own identity, "Ledger green"** (decided 2026-10-24; a sibling of the portfolio, not a copy): warm paper `#f7f6f1`, ledger-green accent `#0f6b4f`, Bricolage Grotesque for headings, Geist for text and JetBrains Mono for tool calls.
 - **The store's apps** look like simple, believable admin screens.
 - **Motion:** changes are highlighted and fade out over about 1.2 seconds. With `prefers-reduced-motion`, the player shows still frames.
 - **Phone widths:** the panes stack, with the store on top and the agent below. There is no horizontal page scroll.
@@ -378,7 +379,7 @@ Each milestone gets its own implementation plan and ends in a working, tested st
 1. **M1 Environment core:** `db`, `core` with all 8 templates, the scorer, and the determinism and scoring tests, against local Postgres.
 2. **M2 Ways in:** the MCP server, the Hono RL API, the Python client, the mcp-evals `hidden_tools` and `env_reward` additions, the first verified runs on free and local models, and `packages/replay`.
 3. **M3 Demo site:** the landing, task, run, try and about pages from static replays, with SEO and Open Graph images.
-4. **M4 Accounts and live runs:** Supabase Auth, encrypted keys, `packages/providers`, step-by-step runs, limits, sharing, community runs, terms and privacy.
+4. **M4 Accounts and live runs:** Google sign-in (Supabase Auth), encrypted keys, `packages/providers`, step-by-step runs, limits, public community runs with owner moderation and user deletion, terms and privacy. Built after M5, on the deployed Supabase.
 5. **M5 Launch:** Supabase and Vercel deployment, CI, the health check, and the portfolio case study.
 
 ## 14. Out of scope for version 1
