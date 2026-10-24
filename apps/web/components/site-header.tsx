@@ -12,7 +12,7 @@ export function SiteHeader() {
   return (
     <header className="border-b border-border">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link href="/" className="font-serif text-2xl leading-none no-underline">
+        <Link href="/" className="font-display text-2xl leading-none no-underline">
           {site.name}
         </Link>
         <nav aria-label="Main" className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-fg-muted">

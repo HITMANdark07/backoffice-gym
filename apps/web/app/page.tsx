@@ -25,7 +25,7 @@ export default function Home() {
   return (
     <>
       <section className="pt-12 sm:pt-20">
-        <h1 className="max-w-4xl font-serif text-5xl leading-[1.02] tracking-[-0.01em] text-balance sm:text-7xl">{site.tagline}</h1>
+        <h1 className="max-w-4xl font-display text-5xl leading-[0.98] tracking-[-0.035em] text-balance sm:text-7xl">{site.tagline}</h1>
         <p className="mt-5 max-w-2xl text-lg text-fg-muted text-pretty">
           {`Scored by SQL against the database, not by another model. ${s.tasks} tasks, ${s.traps} of them traps, and every run replayable step by step.`}
         </p>
@@ -44,7 +44,7 @@ export default function Home() {
       </section>
 
       <section id="results" className="mt-20 scroll-mt-6">
-        <h2 className="font-serif text-4xl">Results so far</h2>
+        <h2 className="font-display text-4xl">Results so far</h2>
         <p className="mt-3 max-w-2xl text-fg-muted text-pretty">
           <strong className="font-semibold text-fg">{s.runs}</strong>
           {` recorded runs (${s.models} models × ${s.tasks} tasks × ${s.seedsPerCell} seeds) from ${s.recordedOn}; `}
@@ -57,13 +57,13 @@ export default function Home() {
       </section>
 
       <section className="mt-20" aria-labelledby="scoring-title">
-        <h2 id="scoring-title" className="font-serif text-4xl">
+        <h2 id="scoring-title" className="font-display text-4xl">
           How the score works
         </h2>
         <dl className="mt-6 border-b border-border">
           {SCORING.map(([term, detail]) => (
             <div key={term} className="grid gap-1 border-t border-border py-5 md:grid-cols-[18rem_1fr] md:gap-8">
-              <dt className="font-serif text-2xl leading-snug">{term}</dt>
+              <dt className="font-display text-2xl leading-snug">{term}</dt>
               <dd className="max-w-prose text-fg-muted">{detail}</dd>
             </div>
           ))}
@@ -71,7 +71,7 @@ export default function Home() {
       </section>
 
       <section className="mt-20 rounded-2xl border border-border bg-surface px-6 py-10 sm:px-10">
-        <h2 className="font-serif text-4xl">Can you beat the agents?</h2>
+        <h2 className="font-display text-4xl">Can you beat the agents?</h2>
         <p className="mt-3 max-w-xl text-fg-muted">Run a task yourself with the same tools and the same scorer, then compare your score with the recorded models.</p>
         <Link href="/try/approval-trap" className="btn-primary mt-6">
           Take the approval trap <ArrowRightIcon className="size-3.5" />

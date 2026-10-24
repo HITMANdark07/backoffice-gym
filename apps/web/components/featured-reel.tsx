@@ -22,7 +22,7 @@ export function FeaturedReel({ items }: { items: ReelItem[] }) {
     <div>
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="font-serif text-3xl leading-tight text-balance">{item.headline}</h2>
+          <h2 className="font-display text-3xl leading-tight text-balance">{item.headline}</h2>
           <p className="mt-1 text-sm text-fg-meta">{item.caption}</p>
         </div>
         <div className="-mr-2 flex" role="group" aria-label="Featured runs">

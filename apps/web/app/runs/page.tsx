@@ -16,7 +16,7 @@ export default function RunsIndex() {
   const runs = listRuns();
   return (
     <section className="py-8">
-      <h1 className="font-serif text-4xl">Recorded runs</h1>
+      <h1 className="font-display text-4xl">Recorded runs</h1>
       <p className="mt-2 max-w-2xl text-fg-muted">
         {(() => {
           const s = stats();

@@ -30,13 +30,13 @@ export default async function TryPage({ params }: Props) {
       <p className="text-sm text-fg-meta">
         <Link href={`/tasks/${slug}`}>{task.title}</Link> / Try it yourself
       </p>
-      <h1 className="mt-2 font-serif text-4xl sm:text-5xl">Try it: {task.title}</h1>
+      <h1 className="mt-2 font-display text-4xl sm:text-5xl">Try it: {task.title}</h1>
       <p className="mt-3 max-w-2xl text-fg-muted">{task.summary}</p>
       <div className="mt-6">
         <TryConsole task={slug} recorded={recorded} />
       </div>
       <section className="mt-10">
-        <h2 className="font-serif text-2xl">Recorded runs to beat</h2>
+        <h2 className="font-display text-2xl">Recorded runs to beat</h2>
         <ul className="mt-2 space-y-0.5 text-sm">
           {recorded.map((r) => (
             <li key={r.id}>

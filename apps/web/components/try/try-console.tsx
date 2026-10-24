@@ -157,7 +157,7 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
         )}
         {score && (
           <div className="rounded-xl border border-border bg-surface p-4">
-            <h2 className="font-serif text-2xl">Your reward: {rewardLabel(score.reward)}</h2>
+            <h2 className="font-display text-2xl">Your reward: {rewardLabel(score.reward)}</h2>
             <ul className="mt-2 space-y-1 text-sm">
               {score.checks.map((c) => (
                 <li key={c.id} className={`flex gap-2 ${c.passed ? 'text-ok' : 'text-bad'}`}>

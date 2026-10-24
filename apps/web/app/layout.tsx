@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import { Geist, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
+import { Bricolage_Grotesque, Geist, JetBrains_Mono } from 'next/font/google';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { site } from '@/lib/site';
 import './globals.css';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'optional' });
-const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: '400', variable: '--font-instrument-serif', display: 'swap' });
+const bricolage = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-bricolage', display: 'swap' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains-mono', display: 'optional' });
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${instrumentSerif.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${geist.variable} ${bricolage.variable} ${jetbrainsMono.variable}`}>
       <body className="min-h-screen">
         <SiteHeader />
         <main className="mx-auto max-w-6xl px-4 sm:px-6">{children}</main>

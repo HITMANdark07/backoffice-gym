@@ -20,22 +20,22 @@ with BackOfficeGym("http://127.0.0.1:8787") as env:   # pnpm api
 export default function AboutPage() {
   return (
     <article className="max-w-3xl py-8">
-      <h1 className="font-serif text-5xl">About</h1>
+      <h1 className="font-display text-5xl">About</h1>
       <p className="mt-4 text-lg text-fg-muted">
         {site.name} is an open-source reinforcement-learning environment. An agent runs the operations desk of Juniper Goods, a fictional online home-goods store: support threads, refunds, replacements, restocking, a staff calendar and a written policy.
       </p>
 
-      <h2 className="mt-10 font-serif text-3xl">How an episode works</h2>
+      <h2 className="mt-10 font-display text-3xl">How an episode works</h2>
       <p className="mt-2">
         A task template and a seed generate a fresh store in PostgreSQL: customers, orders, payments, inventory, calendar and an open support thread. {`The agent gets ${TOOLS.length} tools (${TOOLS.filter((t) => t.kind === 'read').length} to read, ${TOOLS.filter((t) => t.kind === 'act').length} to act, and submit) and at most ${MAX_STEPS} steps.`} The same task and seed always produce the same store.
       </p>
 
-      <h2 className="mt-8 font-serif text-3xl">How the reward is decided</h2>
+      <h2 className="mt-8 font-display text-3xl">How the reward is decided</h2>
       <p className="mt-2">
         When the agent submits, SQL checks read the final database state and compare it with the outcome the seed implies. Required checks are weighted. Forbidden checks (a change outside the task, a refund that breaks policy, obeying a fake instruction) set the reward to 0. No language model judges anything.
       </p>
 
-      <h2 className="mt-8 font-serif text-3xl">Ways in</h2>
+      <h2 className="mt-8 font-display text-3xl">Ways in</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>An MCP server (one episode per session), used by mcp-evals to run and score agents.</li>
         <li>An HTTP RL API: reset, step, score.</li>
@@ -46,7 +46,7 @@ export default function AboutPage() {
         Runs on this site were recorded with <a href="https://github.com/HITMANdark07/mcp-evals">mcp-evals</a>, then re-executed step by step: every replay reproduced its recorded reward exactly.
       </p>
 
-      <h2 className="mt-8 font-serif text-3xl">Limitations</h2>
+      <h2 className="mt-8 font-display text-3xl">Limitations</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>{`${stats().tasks} tasks in one store. ${stats().perfectTasks} of them were solved every time by the ${stats().models} models tested, so harder variants are needed.`}</li>
         <li>One repeat per task and seed: the intervals are wide.</li>

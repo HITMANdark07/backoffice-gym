@@ -16,7 +16,9 @@ export function Heatmap({ cells }: { cells: HeatCell[] }) {
             <th className="text-left text-xs font-medium text-fg-meta">Model</th>
             {tasks.map((t) => (
               <th key={t} scope="col" className="text-left text-xs font-medium text-fg-meta">
-                <Link href={`/tasks/${t}`}>{taskTitle(t)}</Link>
+                <Link href={`/tasks/${t}`} className="no-underline hover:text-accent">
+                  {taskTitle(t)}
+                </Link>
               </th>
             ))}
           </tr>

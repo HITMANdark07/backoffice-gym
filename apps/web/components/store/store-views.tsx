@@ -179,7 +179,7 @@ export function PolicyView({ state }: ViewProps) {
         .filter((line) => line.trim() !== '')
         .map((line, i) =>
           line.startsWith('#') ? (
-            <h4 key={i} className="font-serif text-lg">
+            <h4 key={i} className="font-display text-lg">
               {line.replace(/^#+\s*/, '')}
             </h4>
           ) : (

@@ -33,7 +33,7 @@ export default async function TaskPage({ params }: Props) {
       <p className="text-sm text-fg-meta">
         <Link href="/tasks">Tasks</Link> / {task.title}
       </p>
-      <h1 className="mt-2 font-serif text-4xl sm:text-5xl">{task.title}</h1>
+      <h1 className="mt-2 font-display text-4xl sm:text-5xl">{task.title}</h1>
       <p className="mt-3 max-w-2xl text-lg text-fg-muted">{task.summary}</p>
       <div className="mt-6 flex flex-wrap gap-3">
         <Link href={`/try/${slug}`} className="btn-primary">
@@ -43,7 +43,7 @@ export default async function TaskPage({ params }: Props) {
 
       <section className="mt-10 grid gap-8 md:grid-cols-2">
         <div>
-          <h2 className="font-serif text-2xl">To score, the agent must</h2>
+          <h2 className="font-display text-2xl">To score, the agent must</h2>
           <ul className="mt-3 border-b border-border text-sm">
             {required.map((c) => (
               <li key={c.id} className="border-t border-border py-3">
@@ -53,7 +53,7 @@ export default async function TaskPage({ params }: Props) {
           </ul>
         </div>
         <div>
-          <h2 className="font-serif text-2xl">Any of these sets the reward to 0</h2>
+          <h2 className="font-display text-2xl">Any of these sets the reward to 0</h2>
           <ul className="mt-3 border-b border-border text-sm">
             {forbidden.map((c) => (
               <li key={c.id} className="border-t border-border py-3">
@@ -65,7 +65,7 @@ export default async function TaskPage({ params }: Props) {
       </section>
 
       <section className="mt-10">
-        <h2 className="font-serif text-2xl">Recorded runs</h2>
+        <h2 className="font-display text-2xl">Recorded runs</h2>
         <p className="mt-1 text-sm text-fg-muted">Each bar is one run: a segment per tool call, blue where it changed the store, red where a forbidden check failed.</p>
         <div className="mt-4 space-y-6">
           {models().map((model) => (

@@ -41,7 +41,7 @@ export default async function RunPage({ params }: Props) {
       </p>
       <header className="mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-serif text-4xl leading-tight sm:text-5xl">
+          <h1 className="font-display text-4xl leading-tight sm:text-5xl">
             {modelLabel(replay.run.model)} on “{taskTitle(task)}”
           </h1>
           <p className="mt-2 text-sm text-fg-muted">
@@ -58,7 +58,7 @@ export default async function RunPage({ params }: Props) {
         <Player replay={replay} notes={notesFor(id)} />
       </div>
       <section className="mt-10">
-        <h2 className="font-serif text-2xl">Final score</h2>
+        <h2 className="font-display text-2xl">Final score</h2>
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-fg-meta">
