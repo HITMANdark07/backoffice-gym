@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter @backoffice-gym/db generate && next build && node scripts/check-build.mjs",
   "regions": ["bom1"],
   "crons": [{ "path": "/api/health", "schedule": "30 21 * * *" }]
