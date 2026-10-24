@@ -31,3 +31,12 @@ describe('store views', () => {
     expect(html).toContain('role="tablist"');
   });
 });
+
+describe('inbox highlight', () => {
+  it('highlights the new reply, not the whole thread around it', () => {
+    const replyStep = replay.steps.find((s) => s.tool === 'reply_to_thread')!.n;
+    const html = renderToString(<InboxView state={stateAt(replay, replyStep)} changed={changedAt(replay, replyStep)} />);
+    expect(html.match(/class="[^"]*\bchanged\b[^"]*"/g)).toHaveLength(1);
+    expect(html).toMatch(/<li class="[^"]*\bchanged\b[^"]*"><span class="font-mono text-xs text-fg-meta">agent/);
+  });
+});

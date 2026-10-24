@@ -1,5 +1,6 @@
 import type { CheckResult, ScoreResult } from '@backoffice-gym/core';
 import type { Replay } from '@backoffice-gym/replay';
+import { CheckIcon, CrossIcon } from '@/components/icons';
 import { checkLabel, rewardLabel } from '@/lib/format';
 
 type Status = 'ok' | 'bad' | 'wait';
@@ -10,10 +11,10 @@ function status(c: CheckResult, step: number, done: boolean): Status {
   return c.passed ? 'ok' : done ? 'bad' : 'wait';
 }
 
-const ICON: Record<Status, { glyph: string; label: string; cls: string }> = {
-  ok: { glyph: '✓', label: 'passed', cls: 'bg-ok-bg text-ok' },
-  bad: { glyph: '✕', label: 'failed', cls: 'bg-bad-bg text-bad' },
-  wait: { glyph: '', label: 'pending', cls: 'border border-dashed border-border' },
+const ICON: Record<Status, { Glyph: typeof CheckIcon | null; label: string; cls: string }> = {
+  ok: { Glyph: CheckIcon, label: 'passed', cls: 'bg-ok-bg text-ok' },
+  bad: { Glyph: CrossIcon, label: 'failed', cls: 'bg-bad-bg text-bad' },
+  wait: { Glyph: null, label: 'pending', cls: 'border border-dashed border-fg-meta/50' },
 };
 
 export function Scorecard({ replay, step, score }: { replay: Replay; step: number; score: ScoreResult | null }) {
@@ -34,8 +35,8 @@ export function Scorecard({ replay, step, score }: { replay: Replay; step: numbe
           const icon = ICON[st];
           return (
             <li key={c.id} className={`flex gap-2.5 border-t border-dashed border-border py-1.5 text-sm first:border-t-0 ${st === 'bad' && c.kind === 'forbidden' ? 'rounded bg-bad-bg px-2' : ''}`}>
-              <span role="img" aria-label={icon.label} className={`grid size-[18px] shrink-0 place-items-center rounded-full text-[11px] font-bold ${icon.cls}`}>
-                {icon.glyph}
+              <span role="img" aria-label={icon.label} className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-full ${icon.cls}`}>
+                {icon.Glyph && <icon.Glyph className="size-3" />}
               </span>
               <span className="min-w-0">
                 {checkLabel(c.id)}

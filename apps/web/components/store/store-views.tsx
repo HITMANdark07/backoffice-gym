@@ -21,26 +21,29 @@ export function InboxView({ state, changed }: ViewProps) {
   const threads = [...state.threads].sort((a, b) => (str(a, 'status') === 'open' ? 0 : 1) - (str(b, 'status') === 'open' ? 0 : 1) || num(b, 'id') - num(a, 'id'));
   return (
     <div className="divide-y divide-border">
-      {threads.map((t) => (
-        <article key={str(t, 'id')} className={cx('p-3', on(changed, 'threads', t.id) && 'changed')}>
-          <header className="flex flex-wrap justify-between gap-x-3 text-sm">
-            <span className="font-medium">{str(t, 'subject')}</span>
-            <span className="text-xs text-fg-meta">
-              {who.get(num(t, 'customer_id'))} · {str(t, 'status')}
-            </span>
-          </header>
-          <ul className="mt-2 space-y-1">
-            {state.messages
-              .filter((m) => num(m, 'thread_id') === num(t, 'id'))
-              .map((m) => (
+      {threads.map((t) => {
+        const messages = state.messages.filter((m) => num(m, 'thread_id') === num(t, 'id'));
+        // Highlight the new message itself; the thread only when nothing inside it is new.
+        const threadOnly = on(changed, 'threads', t.id) && !messages.some((m) => on(changed, 'messages', m.id));
+        return (
+          <article key={str(t, 'id')} className={cx('p-3', threadOnly && 'changed')}>
+            <header className="flex flex-wrap justify-between gap-x-3 text-sm">
+              <span className="font-medium">{str(t, 'subject')}</span>
+              <span className="text-xs text-fg-meta">
+                {who.get(num(t, 'customer_id'))} · {str(t, 'status')}
+              </span>
+            </header>
+            <ul className="mt-2 space-y-1">
+              {messages.map((m) => (
                 <li key={str(m, 'id')} className={cx('rounded px-2 py-1 text-sm', on(changed, 'messages', m.id) && 'changed')}>
                   <span className="font-mono text-xs text-fg-meta">{str(m, 'author')}</span>{' '}
                   <span className="whitespace-pre-wrap break-words">{str(m, 'body')}</span>
                 </li>
               ))}
-          </ul>
-        </article>
-      ))}
+            </ul>
+          </article>
+        );
+      })}
     </div>
   );
 }

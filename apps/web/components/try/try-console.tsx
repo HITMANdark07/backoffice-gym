@@ -3,6 +3,7 @@
 import type { ScoreResult } from '@backoffice-gym/core';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { CheckIcon, CrossIcon } from '@/components/icons';
 import { checkLabel, rewardLabel, truncate } from '@/lib/format';
 import { argsFrom, describeApiError, fieldsFor } from '@/lib/schema-form';
 
@@ -75,7 +76,7 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
     return (
       <div className="rounded-xl border border-border bg-surface p-6">
         <p className="text-fg-muted">You get the same tools and the same scorer as the agents. A fresh store is generated for you.</p>
-        <button type="button" onClick={start} disabled={busy} className="mt-4 rounded-full bg-accent px-5 py-2.5 text-sm text-accent-fg disabled:opacity-60">
+        <button type="button" onClick={start} disabled={busy} className="btn-primary mt-4">
           {busy ? 'Starting…' : 'Start an episode'}
         </button>
         {error && <p role="alert" className="mt-3 text-sm text-bad">{error}</p>}
@@ -132,7 +133,7 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
                 )}
               </label>
             ))}
-            <button type="submit" disabled={busy} className="rounded-full bg-accent px-5 py-2 text-sm text-accent-fg disabled:opacity-60">
+            <button type="submit" disabled={busy} className="btn-primary">
               {busy ? 'Running…' : `Run ${tool}`}
             </button>
             {error && <p role="alert" className="text-sm text-bad">{error}</p>}
@@ -143,8 +144,11 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
             <h2 className="font-serif text-2xl">Your reward: {rewardLabel(score.reward)}</h2>
             <ul className="mt-2 space-y-1 text-sm">
               {score.checks.map((c) => (
-                <li key={c.id} className={c.passed ? 'text-ok' : 'text-bad'}>
-                  {c.passed ? '✓' : '✕'} {checkLabel(c.id)} <span className="text-fg-meta">· {c.detail}</span>
+                <li key={c.id} className={`flex gap-2 ${c.passed ? 'text-ok' : 'text-bad'}`}>
+                  {c.passed ? <CheckIcon className="mt-1 size-3.5 shrink-0" /> : <CrossIcon className="mt-1 size-3.5 shrink-0" />}
+                  <span>
+                    {checkLabel(c.id)} <span className="text-fg-meta">· {c.detail}</span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -156,7 +160,7 @@ export function TryConsole({ task, recorded }: { task: string; recorded: Recorde
                 </li>
               ))}
             </ul>
-            <button type="button" onClick={start} className="mt-4 rounded-full border border-border px-4 py-2 text-sm">
+            <button type="button" onClick={start} className="btn-secondary mt-4">
               Try another seed
             </button>
           </div>

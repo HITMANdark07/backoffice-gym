@@ -3,6 +3,7 @@
 import type { Replay } from '@backoffice-gym/replay';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
+import { ArrowRightIcon } from './icons';
 import { Player } from './player/player';
 
 export interface ReelItem {
@@ -21,10 +22,10 @@ export function FeaturedReel({ items }: { items: ReelItem[] }) {
     <div>
       <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <p className="text-xs uppercase tracking-wider text-accent">{item.caption}</p>
-          <p className="font-serif text-2xl">{item.headline}</p>
+          <h2 className="font-serif text-3xl leading-tight text-balance">{item.headline}</h2>
+          <p className="mt-1 text-sm text-fg-meta">{item.caption}</p>
         </div>
-        <div className="flex gap-1.5" role="group" aria-label="Featured runs">
+        <div className="-mr-2 flex" role="group" aria-label="Featured runs">
           {items.map((it, n) => (
             <button
               key={it.id}
@@ -32,14 +33,18 @@ export function FeaturedReel({ items }: { items: ReelItem[] }) {
               aria-label={`Show featured run ${n + 1}: ${it.headline}`}
               aria-pressed={n === i}
               onClick={() => setI(n)}
-              className={`size-2.5 rounded-full ${n === i ? 'bg-accent' : 'bg-border'}`}
-            />
+              className="group grid size-8 place-items-center"
+            >
+              <span className={`block h-2 rounded-full transition-all duration-300 ${n === i ? 'w-6 bg-accent' : 'w-2 bg-border group-hover:bg-fg-meta'}`} />
+            </button>
           ))}
         </div>
       </div>
       <Player key={item.id} replay={item.replay} notes={item.notes} mode="compact" autoplay startAt="start" onEnded={next} />
       <p className="mt-2 text-sm">
-        <Link href={`/runs/${item.id}`}>Open this run step by step →</Link>
+        <Link href={`/runs/${item.id}`} className="inline-flex items-center gap-1.5">
+          Open this run step by step <ArrowRightIcon className="size-3.5" />
+        </Link>
       </p>
     </div>
   );

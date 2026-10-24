@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { ArrowRightIcon } from '@/components/icons';
 import { Player } from '@/components/player/player';
 import { RewardChip } from '@/components/reward-chip';
 import { getReplay, listRuns, taskTitle } from '@/lib/content';
@@ -76,7 +77,9 @@ export default async function RunPage({ params }: Props) {
           </tbody>
         </table>
         <p className="mt-6 text-sm">
-          <Link href={`/tasks/${task}`}>More about “{taskTitle(task)}” and the other runs →</Link>
+          <Link href={`/tasks/${task}`} className="inline-flex items-center gap-1.5">
+            More about “{taskTitle(task)}” and the other runs <ArrowRightIcon className="size-3.5" />
+          </Link>
         </p>
       </section>
     </article>
