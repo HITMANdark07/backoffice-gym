@@ -5,6 +5,6 @@ export type ShopDb = PrismaClient;
 export type Tx = Prisma.TransactionClient;
 
 /** Prisma client for a BackOffice Gym database, on the node-postgres driver adapter. */
-export function createDb(url: string): ShopDb {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
+export function createDb(url: string, opts: { max?: number } = {}): ShopDb {
+  return new PrismaClient({ adapter: new PrismaPg({ connectionString: url, ...(opts.max ? { max: opts.max } : {}) }) });
 }
