@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fbfbf8;
+  --surface: #ffffff;
+  --border: #e4e4de;
+  --fg: #111214;
+  --fg-muted: #52525b;
+  --fg-meta: #60606a;
+  --accent: #1d4ed8;
+  --accent-fg: #ffffff;
+  --ok: #127a3a;
+  --ok-bg: #e8f6ee;
+  --bad: #b42318;
+  --bad-bg: #fdecea;
+  --hl: #fff4c2;
+  --hl-edge: #e6b800;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101114;
+    --surface: #17181c;
+    --border: #26272d;
+    --fg: #ebebef;
+    --fg-muted: #a1a1aa;
+    --fg-meta: #8f8f99;
+    --accent: #8ab4ff;
+    --accent-fg: #0a1630;
+    --ok: #4ade80;
+    --ok-bg: #12261a;
+    --bad: #f87171;
+    --bad-bg: #2a1414;
+    --hl: #3a3212;
+    --hl-edge: #d4a017;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-meta: var(--fg-meta);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-hl: var(--hl);
+  --color-hl-edge: var(--hl-edge);
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--fg);
+  }
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* What the current replay step changed in the store. Persistent while the step is shown. */
+.changed {
+  background: var(--hl);
+  box-shadow: inset 3px 0 0 var(--hl-edge);
+}

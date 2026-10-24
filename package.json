@@ -14,7 +14,9 @@
     "test": "pnpm db:generate && pnpm db:migrate:test && vitest run",
     "typecheck": "pnpm db:generate && pnpm -r typecheck",
     "api": "pnpm --filter @backoffice-gym/api start",
-    "replay": "pnpm --filter @backoffice-gym/replay start"
+    "replay": "pnpm --filter @backoffice-gym/replay start",
+    "web": "pnpm --filter @backoffice-gym/web dev",
+    "web:build": "pnpm --filter @backoffice-gym/web build"
   },
   "devDependencies": {
     "@backoffice-gym/db": "workspace:*",

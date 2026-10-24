@@ -1,6 +1,9 @@
 packages:
   - packages/*
+  - apps/*
 onlyBuiltDependencies:
   - "@prisma/engines"
   - prisma
   - esbuild
+  - sharp
+  - "@parcel/watcher"
