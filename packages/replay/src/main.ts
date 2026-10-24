@@ -22,7 +22,7 @@ const env = createEnv(db);
 const safe = (s: string) => s.replace(/[^a-zA-Z0-9._-]+/g, '_');
 
 mkdirSync(outDir, { recursive: true });
-const index: Array<{ file: string; model: string; task: string; seed: number; reward: number; recorded: number | null }> = [];
+const index: Array<{ id: string; file: string; model: string; task: string; seed: number; reward: number; recorded: number | null; steps: number }> = [];
 let mismatches = 0;
 try {
   for (const trace of await readTraces(tracesPath)) {
@@ -31,7 +31,8 @@ try {
       const replay = await replayTrace(env, db, trace);
       const file = `${safe(trace.runKey)}.json`;
       writeFileSync(join(outDir, file), `${JSON.stringify(replay, null, 2)}\n`);
-      index.push({ file, model: replay.run.model, task: replay.run.task, seed: replay.run.seed, reward: replay.score.reward, recorded: replay.run.recorded_reward });
+      const id = safe(trace.runKey);
+      index.push({ id, file, model: replay.run.model, task: replay.run.task, seed: replay.run.seed, reward: replay.score.reward, recorded: replay.run.recorded_reward, steps: replay.steps.length });
     } catch (e) {
       if (!(e instanceof ReplayMismatchError)) throw e;
       mismatches++;

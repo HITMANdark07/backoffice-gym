@@ -44,18 +44,23 @@ describe('replay', () => {
     expect(replayableCalls(t)).toEqual([{ tool: 'read_policy', args: {} }]);
   });
 
-  it('rebuilds each step with its store changes and matches the recorded reward', async () => {
+  it('rebuilds each step with its store changes, the score after it, and the starting store', async () => {
     const r = await replayTrace(env, db, trace(goodCalls()));
-    expect(r).toMatchObject({ version: 1, env_version: 1, run: { task: 'refund-window-trap', seed: 1, recorded_reward: 1 }, score: { reward: 1 } });
-    expect(r.steps.map((s) => s.tool)).toEqual(['read_policy', 'reply_to_thread', 'submit']);
+    expect(r).toMatchObject({ version: 2, env_version: 1, run: { task: 'refund-window-trap', seed: 1, recorded_reward: 1 }, score: { reward: 1 } });
+    expect(r.initial.threads.length).toBeGreaterThan(0);
+    expect(r.initial.messages.some((m) => m.author === 'agent')).toBe(false);
+    expect(r.steps.map((s) => [s.n, s.env_step, s.tool])).toEqual([[1, 1, 'read_policy'], [2, 2, 'reply_to_thread'], [3, 3, 'submit']]);
     expect(r.steps[0]!.changes).toEqual([]);
     expect(r.steps[1]!.changes.map((c) => `${c.op} ${c.table}`)).toEqual(['change threads', 'add messages']);
+    expect(r.steps[0]!.score_after.checks.find((c) => c.id === 'reply-sent')?.passed).toBe(false);
+    expect(r.steps[1]!.score_after.checks.find((c) => c.id === 'reply-sent')?.passed).toBe(true);
+    expect(r.steps.at(-1)!.score_after).toEqual(r.score);
     expect(r.prompt).toMatch(/Juniper Goods/);
   });
 
-  it('keeps calls made after submit as errors', async () => {
+  it('keeps calls made after submit as errors, numbered by position', async () => {
     const r = await replayTrace(env, db, trace([...goodCalls(), { tool: 'read_policy', args: {} }]));
-    expect(r.steps.at(-1)).toMatchObject({ ok: false, error: 'the episode is finished' });
+    expect(r.steps.at(-1)).toMatchObject({ n: 4, env_step: 3, ok: false, error: 'the episode is finished' });
   });
 
   it('refuses a replay whose reward differs from the recorded one', async () => {

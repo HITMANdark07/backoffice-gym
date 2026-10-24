@@ -7,3 +7,4 @@ export { TASKS, getTask } from './tasks/registry';
 export { GENERIC_CHECKS } from './scoring/score';
 export type { AnyTask, CheckResult, ScoreResult, TaskTemplate } from './tasks/types';
 export { STORE_TIMEZONE } from './util/time';
+export { scoreTask } from './scoring/score';

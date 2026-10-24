@@ -1,5 +1,5 @@
-import { ENV_VERSION, type Env, type ScoreResult } from '@backoffice-gym/core';
-import { diffDumps, dumpEpisode, type DiffEntry, type ShopDb } from '@backoffice-gym/db';
+import { ENV_VERSION, getTask, scoreTask, type Env, type ScoreResult } from '@backoffice-gym/core';
+import { diffDumps, dumpEpisode, type DiffEntry, type Dump, type ShopDb } from '@backoffice-gym/db';
 
 /** The subset of an mcp-evals trace line that replays need. */
 export interface TraceLike {
@@ -14,7 +14,10 @@ export interface TraceLike {
 }
 
 export interface ReplayStep {
+  /** Position in the replay, 1-based. */
   n: number;
+  /** The environment's step number (repeats after the episode ends). */
+  env_step: number;
   tool: string;
   args: unknown;
   ok: boolean;
@@ -22,14 +25,18 @@ export interface ReplayStep {
   error?: string;
   /** Store rows this step added, removed or changed. */
   changes: DiffEntry[];
+  /** The score if the agent had stopped right after this step. */
+  score_after: ScoreResult;
 }
 
 export interface Replay {
-  version: 1;
+  version: 2;
   env_version: number;
   run: { run_key: string; model: string; task: string; seed: number; outcome: string; recorded_reward: number | null };
   prompt: string;
   store_date: string;
+  /** The store right after reset, before any step. */
+  initial: Dump;
   steps: ReplayStep[];
   score: ScoreResult;
 }
@@ -55,14 +62,30 @@ export function replayableCalls(trace: TraceLike): Array<{ tool: string; args: u
 /** Re-runs a recorded run on a fresh episode with the same task and seed. Determinism makes the result identical. */
 export async function replayTrace(env: Env, db: ShopDb, trace: TraceLike): Promise<Replay> {
   const { task, seed } = parseTaskId(trace.task);
+  const template = getTask(task);
+  if (!template) throw new Error(`unknown task "${task}"`);
+  const expected = template.generate(seed).expected;
   const reset = await env.reset({ task, seed, owner: 'system' });
   const id = reset.episode_id;
+  const initial = await dumpEpisode(db, id);
   const steps: ReplayStep[] = [];
-  let before = await dumpEpisode(db, id);
-  for (const call of replayableCalls(trace)) {
+  let before = initial;
+  const calls = replayableCalls(trace);
+  for (let i = 0; i < calls.length; i++) {
+    const call = calls[i]!;
     const r = await env.step(id, { tool: call.tool, args: call.args });
     const after = await dumpEpisode(db, id);
-    steps.push({ n: r.step, tool: call.tool, args: call.args, ok: r.ok, ...(r.ok ? { result: r.result } : { error: r.error }), changes: diffDumps(before, after) });
+    const scoreAfter = scoreTask(template, { expected, initial, final: after, diff: diffDumps(initial, after), storeDate: reset.store_date });
+    steps.push({
+      n: i + 1,
+      env_step: r.step,
+      tool: call.tool,
+      args: call.args,
+      ok: r.ok,
+      ...(r.ok ? { result: r.result } : { error: r.error }),
+      changes: diffDumps(before, after),
+      score_after: scoreAfter,
+    });
     before = after;
   }
   const score = await env.score(id);
@@ -71,11 +94,12 @@ export async function replayTrace(env: Env, db: ShopDb, trace: TraceLike): Promi
     throw new ReplayMismatchError(`${trace.runKey}: replayed reward ${score.reward} differs from recorded ${recorded}`);
   }
   return {
-    version: 1,
+    version: 2,
     env_version: ENV_VERSION,
     run: { run_key: trace.runKey, model: trace.model, task, seed, outcome: trace.outcome, recorded_reward: recorded },
     prompt: reset.task.prompt,
     store_date: reset.store_date,
+    initial,
     steps,
     score,
   };
