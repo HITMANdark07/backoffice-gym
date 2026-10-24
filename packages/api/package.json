@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "type": "module",
-  "exports": { ".": "./src/app.ts" },
+  "exports": { ".": "./src/index.ts" },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "start": "tsx src/main.ts"
