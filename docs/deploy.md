@@ -20,7 +20,7 @@ Then **Actions → migrate → Run workflow** on `main`. It applies every migrat
 
 ## 3. Vercel
 
-1. **Add New → Project → Import** `HITMANdark07/backoffice-gym`. Project name `backoffice-gym` (this gives `backoffice-gym.vercel.app`).
+1. **Add New → Project → Import** `HITMANdark07/backoffice-gym`. Project name `backoffice-gym`. Vercel picks the address; this project got `backoffice-gym-eight.vercel.app` because `backoffice-gym.vercel.app` was taken.
 2. **Root Directory**: `apps/web`. Leave "Include files outside the root directory" on. The framework and build command come from `apps/web/vercel.json`; Vercel installs with pnpm from the repo's lockfile.
 3. **Environment Variables** (Production):
 
@@ -29,16 +29,14 @@ Then **Actions → migrate → Run workflow** on `main`. It applies every migrat
    | `BACKOFFICE_GYM_DATABASE_URL` | the transaction pooler string |
    | `BACKOFFICE_GYM_DB_POOL_MAX` | `3` |
    | `BACKOFFICE_GYM_RATE_LIMIT` | `on` |
-   | `NEXT_PUBLIC_SITE_URL` | `https://backoffice-gym.vercel.app` |
+   | `NEXT_PUBLIC_SITE_URL` | `https://backoffice-gym-eight.vercel.app` |
    | `ENABLE_EXPERIMENTAL_COREPACK` | `1` (installs with the exact pnpm in `package.json`, 10.33.0) |
 
 4. Deploy. A production build without `NEXT_PUBLIC_SITE_URL` fails on purpose.
 
-If the name `backoffice-gym` is taken, use the URL Vercel gives you for `NEXT_PUBLIC_SITE_URL` and tell Claude, so the README and the portfolio link match.
-
 ## 4. Check it
 
-`curl https://backoffice-gym.vercel.app/api/health` returns `{"ok":true,...}`. The daily cron in `vercel.json` calls the same endpoint to expire abandoned episodes and old rate-limit windows, which also keeps the free Supabase project from pausing.
+`curl https://backoffice-gym-eight.vercel.app/api/health` returns `{"ok":true,...}`. The daily cron in `vercel.json` calls the same endpoint to expire abandoned episodes and old rate-limit windows, which also keeps the free Supabase project from pausing.
 
 ## Troubleshooting
 
