@@ -1,5 +1,5 @@
-export { createDb, type ShopDb, type Tx } from './client';
-export { devDatabaseUrl, testDatabaseUrl, poolMax } from './urls';
+export { createDb, pgPoolConfig, type DbOptions, type ShopDb, type Tx } from './client';
+export { devDatabaseUrl, testDatabaseUrl, poolMax, dbCaCert } from './urls';
 export { toJson } from './json';
 export { Prisma } from './generated/prisma/client';
 export {

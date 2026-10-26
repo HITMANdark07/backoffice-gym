@@ -11,3 +11,16 @@ export const poolMax = (env: Record<string, string | undefined> = process.env): 
   const n = Number(env.BACKOFFICE_GYM_DB_POOL_MAX);
   return Number.isInteger(n) && n > 0 ? n : undefined;
 };
+
+/**
+ * Supabase's CA certificate (PEM) from BACKOFFICE_GYM_DB_CA_CERT. When set, the runtime verifies the
+ * database's certificate instead of only encrypting. Literal "\n" escapes are accepted.
+ */
+export const dbCaCert = (env: Record<string, string | undefined> = process.env): string | undefined => {
+  const pem = env.BACKOFFICE_GYM_DB_CA_CERT?.replaceAll('\\n', '\n').trim();
+  if (!pem) return undefined;
+  if (!pem.includes('-----BEGIN CERTIFICATE-----')) {
+    throw new Error('BACKOFFICE_GYM_DB_CA_CERT must be the certificate file contents, starting with -----BEGIN CERTIFICATE-----');
+  }
+  return pem;
+};
