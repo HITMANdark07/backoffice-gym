@@ -18,9 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      # Supabase session pooler URI (port 5432) and the Vercel deploy hook for main, both repo Actions secrets.
-      DATABASE_URL: ${{ secrets.SUPABASE_MIGRATION_URL }}
-      DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+      # Only whether the secrets exist; their values are given to the single step that needs each one,
+      # so dependency install scripts never see them.
+      HAS_DB: ${{ secrets.SUPABASE_MIGRATION_URL != '' }}
+      HAS_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL != '' }}
       SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
@@ -33,14 +34,16 @@ jobs:
           if [ "$tip" = "$SHA" ]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
-            echo "main is now at $tip; that commit's own CI run deploys it."
+            echo "::warning::main is now at $tip, not $SHA; that commit's own CI run deploys it."
             echo "current=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Require the migration secret
-        if: steps.tip.outputs.current == 'true' && env.DATABASE_URL == ''
+      - name: Require both secrets
+        if: steps.tip.outputs.current == 'true'
         run: |
-          echo "::error::SUPABASE_MIGRATION_URL is not set; not deploying code whose migrations cannot run."
-          exit 1
+          missing=0
+          if [ "$HAS_DB" != "true" ]; then echo "::error::SUPABASE_MIGRATION_URL is not set (repo Actions secrets)."; missing=1; fi
+          if [ "$HAS_HOOK" != "true" ]; then echo "::error::VERCEL_DEPLOY_HOOK_URL is not set (repo Actions secrets)."; missing=1; fi
+          exit $missing
       - if: steps.tip.outputs.current == 'true'
         uses: pnpm/action-setup@v4
       - if: steps.tip.outputs.current == 'true'
@@ -52,12 +55,19 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Apply migrations
         if: steps.tip.outputs.current == 'true'
+        env:
+          # Supabase session pooler URI (port 5432).
+          DATABASE_URL: ${{ secrets.SUPABASE_MIGRATION_URL }}
         run: pnpm --filter @backoffice-gym/db exec prisma migrate deploy
       - name: Deploy to Vercel
         if: steps.tip.outputs.current == 'true'
+        env:
+          DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$DEPLOY_HOOK" ]; then
-            echo "::warning::VERCEL_DEPLOY_HOOK_URL is not set; migrations ran but production was not deployed."
+          # The hook builds main's tip at the moment it is called, so check again right before calling it.
+          tip=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$tip" != "$SHA" ]; then
+            echo "::warning::main moved to $tip during migrations; that commit's own CI run deploys it."
             exit 0
           fi
           curl -fsS -X POST "$DEPLOY_HOOK" > /dev/null

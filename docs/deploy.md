@@ -45,6 +45,15 @@ For a brand-new database, run **Actions → migrate → Run workflow** on `main`
 
 Changing an environment variable needs a new deploy to take effect: run the deploy workflow again, or **Deployments → ⋯ → Redeploy**.
 
+## Upgrading a live deployment
+
+For a deployment set up before the deploy workflow existed, in this order:
+
+1. Vercel: add `CRON_SECRET` (Secret). Without it the daily cleanup is refused and logs `CRON_SECRET is not set`.
+2. Vercel: create the deploy hook (step 3.4), and add it to GitHub as `VERCEL_DEPLOY_HOOK_URL`. Check that `SUPABASE_MIGRATION_URL` is on the Secrets tab too.
+3. Push or merge to `main`, or run **Actions → deploy → Run workflow**. Vercel's Deployments page should show a new production build started by the hook. If it does not, Vercel is not building hook deploys with git deploys of `main` turned off: remove the `git` block from `apps/web/vercel.json` to go back to Vercel deploying on push.
+4. Check `/api/health`, then add `BACKOFFICE_GYM_DB_CA_CERT` and redeploy. If `/api/health` then returns 503 with a certificate error in the logs, delete the variable and redeploy.
+
 ## 4. Check it
 
 - `curl https://backoffice-gym-eight.vercel.app/api/health` returns `{"ok":true}` after a read-only database check, or 503 when the database is unreachable.

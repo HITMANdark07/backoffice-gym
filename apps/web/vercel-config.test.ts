@@ -41,4 +41,36 @@ describe('Vercel deployment config', () => {
     expect(deployDoc).toMatch(/same `postgres\.<ref>` user/);
     expect(deployDoc).toMatch(/session pooler[^\n]*BACKOFFICE_GYM_DB_POOL_MAX` to `1`/);
   });
+
+  it('checks main is still at the tested commit again right before calling the hook, since the hook builds the current tip', () => {
+    const deploy = workflow('deploy.yml');
+    const migrate = deploy.indexOf('prisma migrate deploy');
+    const lastTipCheck = deploy.lastIndexOf('git ls-remote origin refs/heads/main');
+    expect(deploy.split('git ls-remote origin refs/heads/main')).toHaveLength(3);
+    expect(lastTipCheck).toBeGreaterThan(migrate);
+    expect(lastTipCheck).toBeLessThan(deploy.indexOf('curl -fsS -X POST "$DEPLOY_HOOK"'));
+  });
+
+  it('fails the deploy run when a secret is missing, instead of going green without deploying', () => {
+    const deploy = workflow('deploy.yml');
+    expect(deploy).toContain('::error::VERCEL_DEPLOY_HOOK_URL');
+    expect(deploy).toContain('::error::SUPABASE_MIGRATION_URL');
+    expect(deploy).not.toContain('::warning::VERCEL_DEPLOY_HOOK_URL');
+  });
+
+  it.each(['deploy.yml', 'migrate.yml'])('%s keeps secret values out of the install step', (name) => {
+    const wf = workflow(name);
+    const install = wf.indexOf('pnpm install --frozen-lockfile');
+    expect(install).toBeGreaterThan(0);
+    for (const secret of ['${{ secrets.SUPABASE_MIGRATION_URL }}', '${{ secrets.VERCEL_DEPLOY_HOOK_URL }}']) {
+      const at = wf.indexOf(secret);
+      if (at >= 0) expect(at).toBeGreaterThan(install);
+    }
+  });
+
+  it('documents the order for upgrading a live deployment', () => {
+    expect(deployDoc).toMatch(/## Upgrading a live deployment/);
+    const section = deployDoc.slice(deployDoc.indexOf('## Upgrading a live deployment'));
+    expect(section.indexOf('CRON_SECRET')).toBeLessThan(section.indexOf('VERCEL_DEPLOY_HOOK_URL'));
+  });
 });

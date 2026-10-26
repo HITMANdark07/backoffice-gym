@@ -120,6 +120,7 @@ export function createApi(o: ApiOptions): Hono {
   });
 
   app.get('/cron/cleanup', async (c) => {
+    if (!o.cronSecret) console.error('[api] cron cleanup refused: CRON_SECRET is not set, so old episodes and rate-limit rows are not cleaned up');
     if (!hasBearer(c.req.header('authorization'), o.cronSecret)) return c.json({ error: 'unauthorized' }, 401);
     const expired = await o.env.expireEpisodes(100);
     await o.onCleanup?.();

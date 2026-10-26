@@ -112,6 +112,13 @@ describe('RL API', () => {
       expect((await call(createApi({ env, cronSecret: '' }), 'Bearer ')).status).toBe(401);
     });
 
+    it('logs that CRON_SECRET is missing when it refuses a call for that reason', async () => {
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await call(createApi({ env }), 'Bearer anything');
+      expect(log.mock.calls.flat().map(String).join(' ')).toMatch(/CRON_SECRET is not set/);
+      log.mockRestore();
+    });
+
     it('refuses a missing or wrong bearer token', async () => {
       const api = createApi({ env, cronSecret: 's3cret-value' });
       expect((await call(api)).status).toBe(401);

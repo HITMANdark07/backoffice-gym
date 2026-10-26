@@ -12,22 +12,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      # Supabase session pooler URI (port 5432), set by the owner in the repo's Actions secrets.
-      DATABASE_URL: ${{ secrets.SUPABASE_MIGRATION_URL }}
+      # Only whether the secret exists; the value goes to the migrate step alone.
+      HAS_DB: ${{ secrets.SUPABASE_MIGRATION_URL != '' }}
     steps:
-      - name: Skip when the secret is not set
-        if: env.DATABASE_URL == ''
-        run: echo "SUPABASE_MIGRATION_URL is not set; nothing to migrate."
-      - if: env.DATABASE_URL != ''
-        uses: actions/checkout@v4
-      - if: env.DATABASE_URL != ''
-        uses: pnpm/action-setup@v4
-      - if: env.DATABASE_URL != ''
-        uses: actions/setup-node@v4
+      - name: Require the migration secret
+        if: env.HAS_DB != 'true'
+        run: |
+          echo "::error::SUPABASE_MIGRATION_URL is not set (repo Actions secrets, Secrets tab)."
+          exit 1
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-      - if: env.DATABASE_URL != ''
-        run: pnpm install --frozen-lockfile
-      - if: env.DATABASE_URL != ''
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        env:
+          # Supabase session pooler URI (port 5432).
+          DATABASE_URL: ${{ secrets.SUPABASE_MIGRATION_URL }}
         run: pnpm --filter @backoffice-gym/db exec prisma migrate deploy
