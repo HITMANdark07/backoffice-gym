@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { robotsFor } from '@/lib/robots';
 import robots from './robots';
 import sitemap from './sitemap';
 
@@ -12,5 +13,10 @@ describe('SEO files', () => {
     const r = robots();
     expect(r.rules).toMatchObject({ userAgent: '*', allow: '/', disallow: '/api/' });
     expect(r.sitemap).toMatch(/\/sitemap\.xml$/);
+  });
+
+  it('blocks all crawling on deployments that should not be indexed', () => {
+    expect(robotsFor(false).rules).toMatchObject({ userAgent: '*', disallow: '/' });
+    expect(robotsFor(true).rules).toMatchObject({ allow: '/', disallow: '/api/' });
   });
 });
