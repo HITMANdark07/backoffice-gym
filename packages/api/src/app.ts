@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 import { EnvError, GENERIC_CHECKS, InfraError, MAX_SEED, TASKS, type Env } from '@backoffice-gym/core';
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -17,8 +17,20 @@ export interface ApiOptions {
   limiter?: RateLimiter;
   /** The client's address for rate limiting. */
   clientIp?: (c: Context) => string;
-  /** Extra cleanup for GET /api/health. */
-  onHealth?: () => Promise<void>;
+  /** Read-only dependency check for GET /api/health (for example, a database ping). */
+  health?: () => Promise<void>;
+  /** Bearer token GET /api/cron/cleanup requires; without one the route refuses every call. */
+  cronSecret?: string;
+  /** Extra cleanup for GET /api/cron/cleanup, after expiring old episodes. */
+  onCleanup?: () => Promise<void>;
+}
+
+const digest = (s: string) => createHash('sha256').update(s).digest();
+
+/** Constant-time check of an "Authorization: Bearer <secret>" header. */
+function hasBearer(header: string | undefined, secret: string | undefined): boolean {
+  if (!secret || !header?.startsWith('Bearer ')) return false;
+  return timingSafeEqual(digest(header.slice('Bearer '.length)), digest(secret));
 }
 
 class HttpError extends Error {
@@ -63,6 +75,8 @@ export function createApi(o: ApiOptions): Hono {
       return c.json({ error: e.message }, e.status);
     }
     if (e instanceof EnvError) return c.json({ error: e.message, code: e.code }, e.code === 'not_found' ? 404 : 400);
+    // Visitors get a generic message; the cause goes to the server logs.
+    console.error(`[api] ${c.req.method} ${c.req.path} failed:`, e);
     if (e instanceof InfraError) return c.json({ error: 'the environment is temporarily unavailable' }, 503);
     return c.json({ error: 'internal error' }, 500);
   });
@@ -101,8 +115,14 @@ export function createApi(o: ApiOptions): Hono {
   app.get('/episodes/:id', async (c) => c.json(await o.env.getEpisode(c.req.param('id'))));
 
   app.get('/health', async (c) => {
+    await o.health?.();
+    return c.json({ ok: true });
+  });
+
+  app.get('/cron/cleanup', async (c) => {
+    if (!hasBearer(c.req.header('authorization'), o.cronSecret)) return c.json({ error: 'unauthorized' }, 401);
     const expired = await o.env.expireEpisodes(100);
-    await o.onHealth?.();
+    await o.onCleanup?.();
     return c.json({ ok: true, expired_episodes: expired });
   });
 

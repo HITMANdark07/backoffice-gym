@@ -1,6 +1,6 @@
 import { createEnv, InfraError, type Env } from '@backoffice-gym/core';
 import { createDb, testDatabaseUrl } from '@backoffice-gym/db';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { createApi } from './app';
 
 const db = createDb(testDatabaseUrl());
@@ -62,15 +62,70 @@ describe('RL API', () => {
   });
 
   it('turns infrastructure errors into a generic 503', async () => {
+    vi.spyOn(console, 'error').mockImplementationOnce(() => {});
     const broken: Env = { ...env, reset: async () => { throw new InfraError('connect ECONNREFUSED 127.0.0.1:5432'); } };
     const res = await createApi({ env: broken }).request('/api/episodes', { method: 'POST', body: JSON.stringify({ task: 'callback', seed: 1 }) });
     expect(res.status).toBe(503);
     expect(JSON.stringify(await res.json())).not.toMatch(/ECONNREFUSED/);
   });
 
-  it('health cleans up expired episodes', async () => {
-    const res = await app.request('/api/health');
+  it('logs the underlying cause of infrastructure errors for the server logs', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken: Env = { ...env, reset: async () => { throw new InfraError('connect ECONNREFUSED 127.0.0.1:5432'); } };
+    await createApi({ env: broken }).request('/api/episodes', { method: 'POST', body: JSON.stringify({ task: 'callback', seed: 1 }) });
+    expect(log.mock.calls.flat().map(String).join(' ')).toMatch(/ECONNREFUSED/);
+    log.mockRestore();
+  });
+
+  it('logs unexpected errors too, while answering with a generic 500', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const broken: Env = { ...env, reset: async () => { throw new TypeError('boom at line 7'); } };
+    const res = await createApi({ env: broken }).request('/api/episodes', { method: 'POST', body: JSON.stringify({ task: 'callback', seed: 1 }) });
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(await res.json())).not.toMatch(/boom/);
+    expect(log.mock.calls.flat().map(String).join(' ')).toMatch(/boom at line 7/);
+    log.mockRestore();
+  });
+
+  it('health runs the read-only check and changes nothing', async () => {
+    let checked = 0;
+    const res = await createApi({ env, health: async () => { checked++; } }).request('/api/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ ok: true, expired_episodes: expect.any(Number) });
+    expect(await res.json()).toEqual({ ok: true });
+    expect(checked).toBe(1);
+  });
+
+  it('health answers 503 when the check fails', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const res = await createApi({ env, health: async () => { throw new InfraError('db down'); } }).request('/api/health');
+    expect(res.status).toBe(503);
+    log.mockRestore();
+  });
+
+  describe('cron cleanup', () => {
+    const call = (api: ReturnType<typeof createApi>, auth?: string) =>
+      api.request('/api/cron/cleanup', auth === undefined ? {} : { headers: { authorization: auth } });
+
+    it('refuses every call when no cron secret is configured', async () => {
+      expect((await call(createApi({ env }))).status).toBe(401);
+      expect((await call(createApi({ env }), 'Bearer ')).status).toBe(401);
+      expect((await call(createApi({ env, cronSecret: '' }), 'Bearer ')).status).toBe(401);
+    });
+
+    it('refuses a missing or wrong bearer token', async () => {
+      const api = createApi({ env, cronSecret: 's3cret-value' });
+      expect((await call(api)).status).toBe(401);
+      expect((await call(api, 'Bearer wrong')).status).toBe(401);
+      expect((await call(api, 's3cret-value')).status).toBe(401);
+    });
+
+    it('expires old episodes and runs the extra cleanup with the right token', async () => {
+      let cleaned = 0;
+      const api = createApi({ env, cronSecret: 's3cret-value', onCleanup: async () => { cleaned++; } });
+      const res = await call(api, 'Bearer s3cret-value');
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ ok: true, expired_episodes: expect.any(Number) });
+      expect(cleaned).toBe(1);
+    });
   });
 });
