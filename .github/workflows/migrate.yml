@@ -1,10 +1,7 @@
 name: migrate
+# Manual runs only. Pushes to main migrate through the deploy workflow, right before production deploys.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - packages/db/prisma/migrations/**
 
 concurrency:
   group: migrate

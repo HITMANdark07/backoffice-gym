@@ -1,0 +1,64 @@
+name: deploy
+# Production deploys run in order: CI passes on main, then migrations, then Vercel's deploy hook.
+# Vercel's own git deploys of main are off (apps/web/vercel.json), so code never ships before its migrations.
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Supabase session pooler URI (port 5432) and the Vercel deploy hook for main, both repo Actions secrets.
+      DATABASE_URL: ${{ secrets.SUPABASE_MIGRATION_URL }}
+      DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - name: Deploy only the commit that is still the tip of main
+        id: tip
+        run: |
+          tip=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$tip" = "$SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "main is now at $tip; that commit's own CI run deploys it."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Require the migration secret
+        if: steps.tip.outputs.current == 'true' && env.DATABASE_URL == ''
+        run: |
+          echo "::error::SUPABASE_MIGRATION_URL is not set; not deploying code whose migrations cannot run."
+          exit 1
+      - if: steps.tip.outputs.current == 'true'
+        uses: pnpm/action-setup@v4
+      - if: steps.tip.outputs.current == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - if: steps.tip.outputs.current == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        if: steps.tip.outputs.current == 'true'
+        run: pnpm --filter @backoffice-gym/db exec prisma migrate deploy
+      - name: Deploy to Vercel
+        if: steps.tip.outputs.current == 'true'
+        run: |
+          if [ -z "$DEPLOY_HOOK" ]; then
+            echo "::warning::VERCEL_DEPLOY_HOOK_URL is not set; migrations ran but production was not deployed."
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK" > /dev/null
+          echo "Vercel is building $SHA."
